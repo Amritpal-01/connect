@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+h2{
+    color: #fff;
+    font-size: larger;
+    font-weight: 900;
+    padding:30px 0;
+}
+
+h4{
+    color: #fff;
+    font-size: smaller;
+    font-weight: 400;
+}
+
+.scrollbar-thin-custom {
+  scrollbar-width: thin;
+  scrollbar-color: #5c5c66 rgba(0,0,0,0);
+}
+
+
+.showNotification{
+  right: 20px;
+}
+
+@keyframes fadeaway {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-30px);
+    visibility: hidden;
+  }
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+  }
+}
+
+.fadeAway {
+  animation: fadeaway 0.3s ease-out forwards;
+}
+
+.fadeIn {
+    transform: translateY(-30px);
+    visibility: hidden;
+   animation: fadein 0.3s ease-out forwards;
+}
+
