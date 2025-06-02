@@ -32,7 +32,7 @@ const page = () => {
   const onSubmit = async (data) => {
     try {
       await signInWithEmailAndPassword(auth, data.email, data.password);
-      notify("Logged in!");
+      redirect("/")
     } catch (error) {
       notify(error.message);
     }

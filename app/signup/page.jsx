@@ -84,8 +84,7 @@ const page = () => {
       updatedAt: serverTimestamp()
     });
 
-      notify("Signup successful!");
-      reset();
+      redirect("/")
 
     } catch (error) {
       notify(error.message);
