@@ -11,10 +11,12 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null); // Firebase Auth user
   const [userData, setUserData] = useState(null);
+  const [isLoadingSession, setIsLoadingSession] = useState(true)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      setIsLoadingSession(false)
     });
 
     return () => unsubscribe();
@@ -37,7 +39,7 @@ export const AuthProvider = ({ children }) => {
   }, [currentUser]);
 
   return (
-    <AuthContext.Provider value={{ currentUser,userData }}>
+    <AuthContext.Provider value={{ currentUser,userData,isLoadingSession }}>
       {children}
     </AuthContext.Provider>
   );

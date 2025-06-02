@@ -84,11 +84,11 @@ const page = () => {
       updatedAt: serverTimestamp()
     });
 
-      redirect("/")
 
     } catch (error) {
       notify(error.message);
     }
+    redirect("/")
   };
 
   const months = [

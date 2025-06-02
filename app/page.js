@@ -6,9 +6,17 @@ import { auth, db } from "@/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { redirect } from "next/navigation";
+import { signOut } from "firebase/auth";
 
 export default function Home() {
-  const { currentUser, userData } = useAuth();
+  const { currentUser, userData,isLoadingSession } = useAuth();
+
+
+  useEffect(() => {
+    if(!isLoadingSession && !currentUser){
+      redirect("/signin")
+    }
+  },[currentUser,isLoadingSession])
 
   if (!currentUser) return <></>;
 
