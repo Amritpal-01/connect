@@ -95,7 +95,7 @@ const page = () => {
         </div>
       </div>
       
-      <div className={`${addByUsernameToggle?"w-80":"w-0"} flex flex-col items-center overflow-hidden`}>
+      <div className={`${addByUsernameToggle?"w-96":"w-0"} flex flex-col items-center overflow-hidden`}>
         <h2 className="mt-12">Add by Username</h2>
         <input
               id="username"

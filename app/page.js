@@ -6,7 +6,7 @@ import { auth, db } from "@/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { redirect } from "next/navigation";
-import { signOut } from "firebase/auth";
+import Image from "next/image";
 
 export default function Home() {
   const { currentUser, userData,isLoadingSession } = useAuth();
@@ -15,6 +15,9 @@ export default function Home() {
   useEffect(() => {
     if(!isLoadingSession && !currentUser){
       redirect("/signin")
+    }
+    if(currentUser){
+    console.log(currentUser.photoURL)
     }
   },[currentUser,isLoadingSession])
 
@@ -27,7 +30,13 @@ export default function Home() {
           <div onClick={() => {
                 redirect("/profile")
             }} className="flex gap-2">
-            <div className="aspect-square w-10 bg-white rounded-full"></div>
+            <div className="aspect-square w-10 relative rounded-full overflow-hidden">
+              <Image
+              fill
+              alt="profilePic"
+              src={`${currentUser.photoURL?currentUser.photoURL:"/noProfile.jpg"}`}
+              />
+            </div>
             <svg
               className="mt-auto"
               width="20px"
@@ -117,6 +126,7 @@ export default function Home() {
               />
             </svg>
           </div>
+          
           <div className="w-full flex flex-col items-center pb-40 overflow-auto">
             <div className="friend w-full px-[20px] flex flex-row py-3 relative hover:bg-[#323239]">
               <div className="w-[80%] bg-[#a1a1ab] h-[0.5px] absolute -top-0 left-[10%]"></div>
