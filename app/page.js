@@ -16,16 +16,13 @@ export default function Home() {
     if(!isLoadingSession && !currentUser){
       redirect("/signin")
     }
-    if(currentUser){
-    console.log(currentUser.photoURL)
-    }
   },[currentUser,isLoadingSession])
 
   if (!currentUser) return <></>;
 
   return (
-    <div className="h-[100dvh] flex overflow-hidden">
-      <div id="friendSection" className="h-full w-96">
+    <div className="h-[100dvh] w-[100dvw] flex overflow-hidden">
+      <div id="friendSection" className="h-full w-96 max-[800px]:w-full">
         <header className="flex justify-between m-5">
           <div onClick={() => {
                 redirect("/profile")
@@ -146,8 +143,8 @@ export default function Home() {
           {/* <div className="h-16 w-96 bg-[#313340] absolute bottom-0"></div> */}
         </main>
       </div>
-      <div className="w-1 h-full bg-[#474751]"></div>
-      <div id="messageSection" className="flex-1 h-full"></div>
+      <div className="w-1 h-full bg-[#474751] max-[800px]:hidden"></div>
+      <div id="messageSection" className="flex-1 h-full max-[800px]:w-0"></div>
     </div>
   );
 }
