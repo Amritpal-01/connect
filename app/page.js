@@ -8,21 +8,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  const frame = useRef()
   const { currentUser, userData } = useAuth();
 
   if (!currentUser) return <></>;
 
   return (
-    <div ref={frame} className="h-[100dvh] flex fadeIn overflow-hidden">
+    <div className="h-[100dvh] flex overflow-hidden">
       <div id="friendSection" className="h-full w-96">
         <header className="flex justify-between m-5">
           <div onClick={() => {
-              frame.current.classList.remove("fadeIn");
-              frame.current.classList.add("fadeAway");
-              setTimeout(() => {
                 redirect("/profile")
-              },300)
             }} className="flex gap-2">
             <div className="aspect-square w-10 bg-white rounded-full"></div>
             <svg
@@ -51,11 +46,7 @@ export default function Home() {
           </div>
           <div
             onClick={() => {
-              frame.current.classList.remove("fadeIn");
-              frame.current.classList.add("fadeAway");
-              setTimeout(() => {
                 redirect("/friend/add")
-              },300)
             }}
             id="addFriend"
             className="h-8 aspect-square rounded-full bg-[#1F5B82] flex justify-center items-center"

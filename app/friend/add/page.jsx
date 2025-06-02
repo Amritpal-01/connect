@@ -5,10 +5,8 @@ import { redirect } from "next/navigation";
 
 const page = () => {
   const [addByUsernameToggle, setaddByUsernameToggle] = useState(false);
-  const frame = useRef();
   return (
     <div
-      ref={frame}
       className="w-full fadeIn h-[100dvh] flex justify-center relative"
     >
       <button
@@ -16,11 +14,7 @@ const page = () => {
           if(addByUsernameToggle){
             setaddByUsernameToggle(false)
           }else{
-            frame.current.classList.remove("fadeIn");
-          frame.current.classList.add("fadeAway");
-          setTimeout(() => {
             redirect("/");
-          }, 300);
           }
         }}
         className="absolute top-5 left-5"

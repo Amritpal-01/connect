@@ -4,21 +4,15 @@ import React, { useRef, useState } from "react";
 import { redirect } from "next/navigation";
 
 const page = () => {
-  const frame = useRef();
   const [name, setName] = useState("Some Guy");
   const [about, setAbout] = useState("");
   return (
     <div
-      ref={frame}
       className="w-full fadeIn h-[100dvh] flex justify-center relative"
     >
       <button
         onClick={() => {
-          frame.current.classList.remove("fadeIn");
-          frame.current.classList.add("fadeAway");
-          setTimeout(() => {
             redirect("/");
-          }, 300);
         }}
         className="absolute top-5 left-5"
       >
