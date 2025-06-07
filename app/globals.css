@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 
+
 h2{
     color: #fff;
     font-size: larger;
@@ -61,4 +62,3 @@ h4{
     visibility: hidden;
     animation: fadein 0.3s ease-out forwards;
 }
-

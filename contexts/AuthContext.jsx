@@ -1,45 +1,59 @@
-"use client"
+/** @format */
+
+"use client";
 
 // context/authContext.js
 import { createContext, useEffect, useState, useContext } from "react";
-import { auth, db } from "@/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
+import { redirect } from "next/navigation";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const [currentChats, setCurrentChats] = useState(null)
   const [currentUser, setCurrentUser] = useState(null); // Firebase Auth user
   const [userData, setUserData] = useState(null);
-  const [isLoadingSession, setIsLoadingSession] = useState(true)
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
-      setIsLoadingSession(false)
+      setIsLoadingSession(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-    useEffect(() => {
-    const fetchUserData = async () => {
+  const fetchUserData = async () => {
       if (!currentUser) return;
+      
 
-      const userRef = doc(db, "users", currentUser.uid);
-      const docSnap = await getDoc(userRef);
+      let responce = await fetch("/api/getUserData", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: currentUser.uid,
+        }),
+      });
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setUserData(data);
+      if (!responce.ok) {
+        redirect("/auth/signup");
+      } else {
+        let res = await responce.json();
+        setUserData(res.user);
       }
+
     };
+
+  useEffect(() => {
+    
 
     fetchUserData();
   }, [currentUser]);
 
   return (
-    <AuthContext.Provider value={{ currentUser,userData,isLoadingSession }}>
+    <AuthContext.Provider value={{ currentUser, userData, fetchUserData ,isLoadingSession , currentChats, setCurrentChats}}>
       {children}
     </AuthContext.Provider>
   );
