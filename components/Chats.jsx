@@ -26,7 +26,6 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const [viewportHeight, setViewportHeight] = useState('100vh');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,25 +69,6 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       }
     }
   }, [messages]);
-
-  useEffect(() => {
-    const updateHeight = () => {
-      setViewportHeight(`${window.visualViewport?.height || window.innerHeight}px`);
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', updateHeight);
-      window.visualViewport.addEventListener('scroll', updateHeight);
-    }
-
-    updateHeight();
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', updateHeight);
-        window.visualViewport.removeEventListener('scroll', updateHeight);
-      }
-    };
-  }, []);
 
   const handleEmojiClick = (emojiObject) => {
     setMessage(prev => prev + emojiObject.emoji);
@@ -153,9 +133,9 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
     );
 
   return (
-    <div className="flex flex-col bg-gray-900/50 backdrop-blur-sm" style={{ height: viewportHeight }}>
+    <div className="h-full flex flex-col bg-gray-900/50 backdrop-blur-sm">
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-700/50 bg-gray-800/30 backdrop-blur-sm">
+      <div className="flex items-center justify-between border-b border-gray-700/50 bg-gray-800/30 backdrop-blur-sm">
         <button
           onClick={() => setActivePanelMain("chats")}
           className={`pl-2 pr-1 rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm min-[800px]:hidden ${
@@ -278,111 +258,6 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="flex-shrink-0">
-        <form
-          onSubmit={handleSendMessage}
-          className="p-1.5 border-t border-gray-700/50 bg-gray-800/30 backdrop-blur-sm"
-        >
-          {attachments.length > 0 && (
-            <div className="flex gap-1.5 mb-1.5 overflow-x-auto pb-1.5 scrollbar-thin-custom">
-              {attachments.map((file, index) => (
-                <div key={index} className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 group">
-                  <Image
-                    src={URL.createObjectURL(file)}
-                    alt={`Attachment ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
-                    className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex items-end gap-1.5">
-            <button
-              type="button"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-1.5 rounded-lg bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:bg-gray-700/50 transition-all duration-300 flex-shrink-0"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-6c.78 2.34 2.72 4 5 4s4.22-1.66 5-4H7zm8-3c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1zm-6 0c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1z"/>
-              </svg>
-            </button>
-            <div className="flex-1 min-h-[36px] max-h-24 bg-gray-800/50 rounded-lg flex items-end">
-              <textarea
-                value={message}
-                onChange={(e) => {
-                  setMessage(e.target.value);
-                  handleTyping();
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 96) + 'px';
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage(e);
-                  }
-                }}
-                placeholder="Type a message..."
-                rows={1}
-                className="flex-1 px-3 py-2 bg-transparent text-gray-200 placeholder-gray-400 focus:outline-none resize-none max-h-24 min-h-[36px] text-sm"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 rounded-lg bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:bg-gray-700/50 transition-all duration-300 flex-shrink-0"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-              </svg>
-            </button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              multiple
-              accept="image/*"
-              className="hidden"
-            />
-            <button
-              type="submit"
-              disabled={!message.trim() && attachments.length === 0}
-              className="p-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
-              </svg>
-            </button>
-          </div>
-          {showEmojiPicker && (
-            <div className="absolute bottom-16 left-2 z-50">
-              <EmojiPicker onEmojiClick={handleEmojiClick} />
-            </div>
-          )}
-        </form>
-      </div>
-
       {/* Scroll to Bottom Button */}
       <AnimatePresence>
         {showScrollButton && (
@@ -391,7 +266,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             onClick={scrollToBottom}
-            className="fixed bottom-24 right-6 p-3 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-500 transition-all duration-300 z-10"
+            className="absolute bottom-24 right-6 p-3 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-500 transition-all duration-300 z-10"
           >
             <svg
               className="w-5 h-5"
@@ -410,6 +285,109 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
           </motion.button>
         )}
       </AnimatePresence>
+
+      {/* Message Input */}
+      <form
+        onSubmit={handleSendMessage}
+        className="p-1.5 border-t border-gray-700/50 bg-gray-800/30 backdrop-blur-sm"
+      >
+        {attachments.length > 0 && (
+          <div className="flex gap-1.5 mb-1.5 overflow-x-auto pb-1.5 scrollbar-thin-custom">
+            {attachments.map((file, index) => (
+              <div key={index} className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 group">
+                <Image
+                  src={URL.createObjectURL(file)}
+                  alt={`Attachment ${index + 1}`}
+                  fill
+                  className="object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
+                  className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex items-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="p-1.5 rounded-lg bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:bg-gray-700/50 transition-all duration-300 flex-shrink-0"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-6c.78 2.34 2.72 4 5 4s4.22-1.66 5-4H7zm8-3c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1zm-6 0c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1z"/>
+            </svg>
+          </button>
+          <div className="flex-1 min-h-[36px] max-h-24 bg-gray-800/50 rounded-lg flex items-end">
+            <textarea
+              value={message}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                handleTyping();
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 96) + 'px';
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e);
+                }
+              }}
+              placeholder="Type a message..."
+              rows={1}
+              className="flex-1 px-3 py-2 bg-transparent text-gray-200 placeholder-gray-400 focus:outline-none resize-none max-h-24 min-h-[36px] text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="p-1.5 rounded-lg bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:bg-gray-700/50 transition-all duration-300 flex-shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            multiple
+            accept="image/*"
+            className="hidden"
+          />
+          <button
+            type="submit"
+            disabled={!message.trim() && attachments.length === 0}
+            className="p-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              />
+            </svg>
+          </button>
+        </div>
+        {showEmojiPicker && (
+          <div className="absolute bottom-16 left-2 z-50">
+            <EmojiPicker onEmojiClick={handleEmojiClick} />
+          </div>
+        )}
+      </form>
     </div>
   );
 };
