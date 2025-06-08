@@ -87,7 +87,7 @@ const Requests = () => {
             >
               <polygon points="13.933,1 34,21.068 14.431,40.637 9.498,35.704 24.136,21.068 9,5.933" />
             </svg>
-            <h3 className='text-gray-400 font-bold'>Back</h3>
+            <h3 className='text-gray-400 pr-2 font-bold'>Back</h3>
         </button>
       )}
 
