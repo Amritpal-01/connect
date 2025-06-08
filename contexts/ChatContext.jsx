@@ -65,7 +65,7 @@ export const ChatProvider = ({ children }) => {
       socket.on("connect", onConnect);
       socket.on("disconnect", onDisconnect);
 
-      socket.on("receivePrivateMessage", ({ from, message }) => {
+      socket.on("receivePrivateMessage", ({ message }) => {
         setMessages((prevMessages) => [...prevMessages, message]);
       });
 

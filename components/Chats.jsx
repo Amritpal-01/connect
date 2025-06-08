@@ -100,8 +100,10 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       timestamp: new Date(),
       attachments: attachments
     };
+    
+    setMessages([...messages, newMessage]);
 
-    sendPrivateMessage(newMessage);
+    await sendPrivateMessage(newMessage);
 
     let response = await fetch("/api/sendMessage", {
       method: "POST",
@@ -116,7 +118,6 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       }),
     });
 
-    setMessages([...messages, newMessage]);
     setMessage("");
     setAttachments([]);
   };
