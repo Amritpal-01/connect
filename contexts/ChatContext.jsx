@@ -13,10 +13,13 @@ export const ChatProvider = ({ children }) => {
   const [activeFriend, setActiveFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentRoomId, setCurrentRoomId] = useState(null);
+  const [isloadingMessages,setIsloadingMessages] = useState(null)
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
 
   const getMessages = async () => {
+    setIsloadingMessages(true)
+    setMessages([])
     let responce = await fetch("/api/getMessages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -29,6 +32,7 @@ export const ChatProvider = ({ children }) => {
     let res = await responce.json();
     setMessages(res.currentRoom.messages);
     setCurrentRoomId(res.currentRoom.roomId);
+    setIsloadingMessages(false)
   };
 
   useEffect(() => {
@@ -89,6 +93,7 @@ export const ChatProvider = ({ children }) => {
         setMessages,
         currentRoomId,
         sendPrivateMessage,
+        isloadingMessages
       }}
     >
       {children}

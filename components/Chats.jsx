@@ -13,7 +13,8 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
     messages,
     setMessages,
     currentRoomId,
-    sendPrivateMessage
+    sendPrivateMessage,
+    isloadingMessages
   } = useChat();
   const { currentUser, userData } = useAuth();
   const [message, setMessage] = useState("");
@@ -119,6 +120,16 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
     setMessage("");
     setAttachments([]);
   };
+
+   if (isloadingMessages)
+    return (
+      <div className="w-full h-[100dvh] flex items-center justify-center ">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-400 font-medium">Loading...</p>
+        </div>
+      </div>
+    );
 
   return (
     <div className="h-full flex flex-col bg-gray-900/50 backdrop-blur-sm">
