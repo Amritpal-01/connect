@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { auth } from "@/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import Image from "next/image";
 
 const page = () => {
   const signupFormCont = useRef();
@@ -60,6 +59,17 @@ const page = () => {
       }
     });
 
+    async function deleteUser() {
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            await user.delete();
+          } 
+        } catch (error) {
+          console.error("Error deleting user:", error);
+        }
+      }
+
     if (!isDateGood) {
       notify("Please fill in all date of birth fields");
       setIsLoading(false);
@@ -107,8 +117,13 @@ const page = () => {
 
       isUserDataSaved = true;
     } catch (error) {
+
       notify(error.message);
+
+      deleteUser();
+
       reset();
+      
     } finally {
       setIsLoading(false);
     }
@@ -119,12 +134,24 @@ const page = () => {
   };
 
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-  const years = Array.from({ length: 100 }, (_, i) => (new Date().getFullYear() - i).toString());
+  const years = Array.from({ length: 100 }, (_, i) =>
+    (new Date().getFullYear() - i).toString()
+  );
 
   const DOBMap = [
     { type: "Month", options: months },
@@ -215,8 +242,12 @@ const page = () => {
       <div className="signupFormCont fadeIn" ref={signupFormCont}>
         <div className="max-w-md w-full mx-auto p-6">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-white mb-1">Create Account</h2>
-            <p className="text-gray-400 text-sm">Join us and start chatting with friends</p>
+            <h2 className="text-2xl font-bold text-white mb-1">
+              Create Account
+            </h2>
+            <p className="text-gray-400 text-sm">
+              Join us and start chatting with friends
+            </p>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -236,7 +267,9 @@ const page = () => {
                 })}
               />
               {errors.name && (
-                <p className="mt-0.5 text-sm text-red-500">{errors.name.message}</p>
+                <p className="mt-0.5 text-sm text-red-500">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -284,7 +317,9 @@ const page = () => {
                 })}
               />
               {errors.email && (
-                <p className="mt-0.5 text-sm text-red-500">{errors.email.message}</p>
+                <p className="mt-0.5 text-sm text-red-500">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 

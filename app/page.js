@@ -7,8 +7,10 @@ import NavigationWindow from "@/components/NavigationWindow";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { redirect } from "next/navigation";
+import { useChat } from "@/contexts/ChatContext";
 
 export default function Home() {
+  const{fuck} = useChat()
   const { currentUser, userData, isLoadingSession } = useAuth();
   const [isChatsToggle, setIsChatsToggle] = useState(true);
   const [activePanelMain, setActivePanelMain] = useState("chats");

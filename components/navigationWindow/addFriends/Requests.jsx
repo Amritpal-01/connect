@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 
 const Requests = () => {
-  const { currentUser, userData, isLoadingSession } = useAuth();
+  const { currentUser, userData, isLoadingSession, fetchUserData } = useAuth();
   const [addByUsernameToggle, setAddByUsernameToggle] = useState(false);
   const [friendRequests, setFriendRequests] = useState([]);
   const [friendname, setFriendname] = useState("");
@@ -37,6 +37,9 @@ const Requests = () => {
     } finally {
       setIsLoading(false);
     }
+
+      fetchUserData()
+
   }
 
   const sendFriendRequest = async () => {
@@ -64,6 +67,8 @@ const Requests = () => {
     } finally {
       setIsLoading(false);
     }
+
+    fetchUserData()
   };
 
   return (
@@ -71,7 +76,7 @@ const Requests = () => {
       {addByUsernameToggle && (
         <button
           onClick={() => setAddByUsernameToggle(false)}
-          className="absolute top-6 -left-10 z-20 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm"
+          className="absolute -bottom-15 z-20 p-2 flex flex-row gap-[2px] items-center rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm"
         >
           <svg
               className="text-gray-400 group-hover:text-blue-500 rotate-180 transition-colors duration-300"
@@ -82,6 +87,7 @@ const Requests = () => {
             >
               <polygon points="13.933,1 34,21.068 14.431,40.637 9.498,35.704 24.136,21.068 9,5.933" />
             </svg>
+            <h3 className='text-gray-400 font-bold'>Back</h3>
         </button>
       )}
 

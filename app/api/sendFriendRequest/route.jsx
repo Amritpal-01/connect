@@ -3,12 +3,14 @@
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import UserData from "@/app/models/userData";
+import Room from "@/app/models/Room";
 
 export async function POST(request) {
   try {
     let body = await request.json();
 
     await mongoose.connect(`${process.env.MONGODB_URI}connect`);
+
     let user = await UserData.findOne({ username: body.username });
     let friend = await UserData.findOne({ username: body.friendname });
 
@@ -44,13 +46,13 @@ export async function POST(request) {
         "friendRequests.friendUsername": user.username, // assuming 'body.friendname' holds the username
       });
 
-      if(b == null){
+      if (b == null) {
         friend.friendRequests.push({
-        friendUid: user.uid,
-        friendDisplayName: user.displayName,
-        friendUsername: user.username,
-        friendPhotoURL: user.photoURL,
-      });
+          friendUid: user.uid,
+          friendDisplayName: user.displayName,
+          friendUsername: user.username,
+          friendPhotoURL: user.photoURL,
+        });
       }
 
       await friend.save();
@@ -67,8 +69,20 @@ export async function POST(request) {
       );
     }
 
-    await user.save();
+    let currentRoom = await Room.findOne({
+      roomId: [user.uid, friend.uid].sort().join("szrad")
+    });
 
+    if(!currentRoom){
+      let newRoom = new Room({
+      roomId: [user.uid, friend.uid].sort().join("szrad"),
+      messages: [],
+      })
+
+      await newRoom.save();
+    }
+
+    await user.save();
 
     return NextResponse.json({ status: 200 });
   } catch {
