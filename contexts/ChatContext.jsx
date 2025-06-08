@@ -2,10 +2,10 @@
 
 "use client";
 
-// context/ChatContext.js
 import { createContext, useEffect, useState, useContext } from "react";
 import { socket } from "../socket";
 import { useAuth } from "./AuthContext";
+
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
@@ -13,14 +13,14 @@ export const ChatProvider = ({ children }) => {
   const [activeFriend, setActiveFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentRoomId, setCurrentRoomId] = useState(null);
-  const [isloadingMessages,setIsloadingMessages] = useState(null)
+  const [isloadingMessages, setIsloadingMessages] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
 
   const getMessages = async () => {
-    setIsloadingMessages(true)
-    setMessages([])
-    let responce = await fetch("/api/getMessages", {
+    setIsloadingMessages(true);
+    setMessages([]);
+    const response = await fetch("/api/getMessages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -29,59 +29,56 @@ export const ChatProvider = ({ children }) => {
       }),
     });
 
-    let res = await responce.json();
+    const res = await response.json();
     setMessages(res.currentRoom.messages);
     setCurrentRoomId(res.currentRoom.roomId);
-    setIsloadingMessages(false)
+    setIsloadingMessages(false);
   };
 
   useEffect(() => {
     if (!activeFriend) return;
-
     getMessages();
   }, [activeFriend]);
 
-  useEffect(
-    () => {
-      if (!userData) return;
-      if (socket.connected) {
-        onConnect();
-      }
+  useEffect(() => {
+    if (!userData) return;
 
-      function onConnect() {
-        setIsConnected(true);
-        setTransport(socket.io.engine.transport.name);
+    const onConnect = () => {
+      setIsConnected(true);
+      setTransport(socket.io.engine.transport.name);
 
-        socket.io.engine.on("upgrade", (transport) => {
-          setTransport(transport.name);
-        });
-      }
-
-      function onDisconnect() {
-        setIsConnected(false);
-        setTransport("N/A");
-      }
-
-      socket.on("connect", onConnect);
-      socket.on("disconnect", onDisconnect);
-
-      socket.on("receivePrivateMessage", ({ message }) => {
-        setMessages((prevMessages) => [...prevMessages, message]);
+      socket.io.engine.on("upgrade", (transport) => {
+        setTransport(transport.name);
       });
+    };
 
-      socket.emit("register", userData.username);
+    const onDisconnect = () => {
+      setIsConnected(false);
+      setTransport("N/A");
+    };
 
-      return () => {
-        socket.off("connect", onConnect);
-        socket.off("disconnect", onDisconnect);
-      };
-    },
-    [userData],
-    []
-  );
+    const onReceiveMessage = ({ message }) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("receivePrivateMessage", onReceiveMessage);
+
+    socket.emit("register", userData.username);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("receivePrivateMessage", onReceiveMessage);
+    };
+  }, [userData]);
 
   const sendPrivateMessage = (message) => {
-    socket.emit("privateMessage", { to: activeFriend.friendUsername, message });
+    socket.emit("privateMessage", {
+      to: activeFriend.friendUsername,
+      message,
+    });
   };
 
   return (
@@ -93,7 +90,7 @@ export const ChatProvider = ({ children }) => {
         setMessages,
         currentRoomId,
         sendPrivateMessage,
-        isloadingMessages
+        isloadingMessages,
       }}
     >
       {children}
