@@ -66,7 +66,7 @@ export default function Home() {
         className={`w-[1px] h-[100dvh] bg-[#474751] max-[800px]:hidden`}
       ></div>
       <div
-        className={`flex-1 items-start transition-all duration-300 ${
+        className={`flex-1 overflow-hidden items-start transition-all duration-300 ${
           activePanelMain === "room"
             ? "max-[800px]:w-[100dvw]"
             : "w-0 opacity-0"

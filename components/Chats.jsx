@@ -181,7 +181,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto  max-[800px]:pt-15 space-y-2 p-2 scrollbar-thin-custom relative"
+        className="flex-1 overflow-y-auto max-[800px]:pt-15 space-y-2 p-2 scrollbar-thin-custom relative"
       >
         <AnimatePresence>
           {messages.map((msg, i) => (
