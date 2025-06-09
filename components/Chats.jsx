@@ -377,7 +377,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
               }}
               placeholder="Type a message..."
               rows={1}
-              className="flex-1 px-3 py-2 bg-transparent text-gray-200 placeholder-gray-400 focus:outline-none resize-none max-h-24 min-h-[36px] text-sm"
+              className="flex-1 px-3 py-2 bg-transparent text-gray-200 placeholder-gray-400 focus:outline-none resize-none max-h-24 min-h-[36px] text-[16px]"
             />
           </div>
           <button
