@@ -9,7 +9,7 @@ import { useAuth } from "./AuthContext";
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-  const { userData } = useAuth();
+  const { userData,fetchUserData } = useAuth();
   const [activeFriend, setActiveFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentRoomId, setCurrentRoomId] = useState(null);
@@ -61,6 +61,11 @@ export const ChatProvider = ({ children }) => {
       setMessages((prevMessages) => [...prevMessages, message]);
     };
 
+    const onFr = () => {
+      fetchUserData();
+    }
+
+    socket.on("receivePrivateFriendRequest", onFr)
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("receivePrivateMessage", onReceiveMessage);
@@ -71,6 +76,7 @@ export const ChatProvider = ({ children }) => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("receivePrivateMessage", onReceiveMessage);
+      socket.off("receivePrivateFriendRequest", onFr);
     };
   }, [userData]);
 
@@ -80,6 +86,12 @@ export const ChatProvider = ({ children }) => {
       message,
     });
   };
+
+  const sendFriendRequstThroughSocket = (friendname) => {
+    socket.emit("privateFriendRequest", {
+      to: friendname
+    });
+  }
 
   return (
     <ChatContext.Provider
@@ -91,6 +103,7 @@ export const ChatProvider = ({ children }) => {
         currentRoomId,
         sendPrivateMessage,
         isloadingMessages,
+        sendFriendRequstThroughSocket
       }}
     >
       {children}
