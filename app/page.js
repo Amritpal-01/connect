@@ -5,15 +5,31 @@
 import Chats from "@/components/Chats";
 import NavigationWindow from "@/components/NavigationWindow";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { redirect } from "next/navigation";
 import { useChat } from "@/contexts/ChatContext";
 
 export default function Home() {
-  const{fuck} = useChat()
+  const { fuck } = useChat();
+  const appView = useRef()
   const { currentUser, userData, isLoadingSession } = useAuth();
   const [isChatsToggle, setIsChatsToggle] = useState(true);
   const [activePanelMain, setActivePanelMain] = useState("chats");
+  const [viewPortHeight, setViewPortHeight] = useState(0); // initialize safely
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.visualViewport) {
+      setViewPortHeight(window.visualViewport.height.toFixed(2));
+    }
+  }, []);
+
+
+  useEffect(() => {
+    window.visualViewport.addEventListener("resize", () => {
+      let num = window.visualViewport.height.toFixed(2);
+      setViewPortHeight(num);
+    });
+  }, []);
 
   useEffect(() => {
     if (!isLoadingSession && !currentUser) {
@@ -32,9 +48,13 @@ export default function Home() {
     );
 
   return (
-    <div className="w-full h-[100dvh] flex flex-row overflow-hidden">
+    <div
+    ref={appView}
+      className={`w-full max-h-[100dvh] flex flex-row`}
+      style={{height:`${(activePanelMain === "room")?(viewPortHeight + "px"):""}`}}
+    >
       <div
-        className={`h-full flex flex-col transition-all duration-300 w-96 overflow-hidden ${
+        className={`flex flex-col transition-all duration-300 w-96 overflow-hidden ${
           activePanelMain === "chats"
             ? "max-[800px]:w-[100dvw]"
             : "max-[800px]:w-0"
@@ -42,10 +62,14 @@ export default function Home() {
       >
         <NavigationWindow setActivePanelMain={setActivePanelMain} />
       </div>
-      <div className={`w-[1px] h-full bg-[#474751] max-[800px]:hidden`}></div>
       <div
-        className={`flex-1 transition-all duration-300 ${
-          activePanelMain === "room" ? "max-[800px]:w-[100dvw]" : "w-0 opacity-0"
+        className={`w-[1px] h-[100dvh] bg-[#474751] max-[800px]:hidden`}
+      ></div>
+      <div
+        className={`flex-1 items-start transition-all duration-300 ${
+          activePanelMain === "room"
+            ? "max-[800px]:w-[100dvw]"
+            : "w-0 opacity-0"
         }`}
       >
         <Chats

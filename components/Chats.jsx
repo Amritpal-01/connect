@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChat } from "@/contexts/ChatContext";
-import EmojiPicker from 'emoji-picker-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import EmojiPicker from "emoji-picker-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const {
@@ -14,7 +14,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
     setMessages,
     currentRoomId,
     sendPrivateMessage,
-    isloadingMessages
+    isloadingMessages,
   } = useChat();
   const { currentUser, userData } = useAuth();
   const [message, setMessage] = useState("");
@@ -34,8 +34,9 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
 
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+
+    const { scrollTop, scrollHeight, clientHeight } =
+      messagesContainerRef.current;
     const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
     setShowScrollButton(!isNearBottom);
   };
@@ -43,17 +44,20 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (container) {
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
     }
   }, []);
 
   // Scroll to bottom when chat is opened
   useEffect(() => {
-    if (activePanelMain === "room") {
-      setTimeout(scrollToBottom, 100); // Small delay to ensure DOM is ready
+    if (activePanelMain === "room" && !isloadingMessages) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+        setShowScrollButton(false);
+      }, 100); // Small delay to ensure DOM is ready
     }
-  }, [activePanelMain]);
+  }, [activePanelMain, isloadingMessages]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -71,13 +75,13 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   }, [messages]);
 
   const handleEmojiClick = (emojiObject) => {
-    setMessage(prev => prev + emojiObject.emoji);
+    setMessage((prev) => prev + emojiObject.emoji);
     setShowEmojiPicker(false);
   };
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    setAttachments(prev => [...prev, ...files]);
+    setAttachments((prev) => [...prev, ...files]);
   };
 
   const handleTyping = () => {
@@ -98,9 +102,9 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       text: message,
       sender: userData.username,
       timestamp: new Date(),
-      attachments: attachments
+      attachments: attachments,
     };
-    
+
     setMessages([...messages, newMessage]);
 
     await sendPrivateMessage(newMessage);
@@ -113,7 +117,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
         message: {
           text: newMessage.text,
           sender: newMessage.sender,
-          attachments: newMessage.attachments
+          attachments: newMessage.attachments,
         },
       }),
     });
@@ -122,7 +126,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
     setAttachments([]);
   };
 
-   if (isloadingMessages)
+  if (isloadingMessages)
     return (
       <div className="w-full h-[100dvh] flex items-center justify-center ">
         <div className="flex flex-col items-center gap-4">
@@ -135,7 +139,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   return (
     <div className="h-full flex flex-col bg-gray-900/50 backdrop-blur-sm">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-700/50 bg-gray-800/30 backdrop-blur-sm">
+      <div className="flex z-10 max-[800px]:fixed top-0 w-full items-center justify-between border-b border-gray-700/50 bg-gray-800/30 backdrop-blur-sm">
         <button
           onClick={() => setActivePanelMain("chats")}
           className={`pl-2 pr-1 rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm min-[800px]:hidden ${
@@ -163,7 +167,9 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
             />
           </div>
           <div className="min-w-0">
-            <h1 className="text-white font-medium text-sm truncate">{activeFriend?.friendDisplayName}</h1>
+            <h1 className="text-white font-medium text-sm truncate">
+              {activeFriend?.friendDisplayName}
+            </h1>
             <p className="text-xs text-gray-400">
               {isTyping ? "Typing..." : "Online"}
             </p>
@@ -173,9 +179,9 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       </div>
 
       {/* Messages */}
-      <div 
+      <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto space-y-2 p-2 scrollbar-thin-custom relative"
+        className="flex-1 overflow-y-auto  max-[800px]:pt-15 space-y-2 p-2 scrollbar-thin-custom relative"
       >
         <AnimatePresence>
           {messages.map((msg, i) => (
@@ -186,7 +192,9 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.15 }}
               className={`flex ${
-                msg.sender === userData.username ? "justify-end" : "justify-start"
+                msg.sender === userData.username
+                  ? "justify-end"
+                  : "justify-start"
               }`}
             >
               {msg.sender !== userData.username && (
@@ -212,8 +220,8 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
                 {msg.attachments?.length > 0 && (
                   <div className="grid grid-cols-2 gap-1 mb-1">
                     {msg.attachments.map((file, index) => (
-                      <div 
-                        key={index} 
+                      <div
+                        key={index}
                         className="relative aspect-square rounded-lg overflow-hidden"
                       >
                         <Image
@@ -226,10 +234,14 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
                     ))}
                   </div>
                 )}
-                <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+                <p className="text-sm whitespace-pre-wrap break-words">
+                  {msg.text}
+                </p>
                 <p
                   className={`text-[10px] mt-0.5 ${
-                    msg.sender === userData.username ? "text-blue-100" : "text-gray-400"
+                    msg.sender === userData.username
+                      ? "text-blue-100"
+                      : "text-gray-400"
                   }`}
                 >
                   {new Date(msg.timestamp).toLocaleTimeString("en-US", {
@@ -294,7 +306,10 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
         {attachments.length > 0 && (
           <div className="flex gap-1.5 mb-1.5 overflow-x-auto pb-1.5 scrollbar-thin-custom">
             {attachments.map((file, index) => (
-              <div key={index} className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 group">
+              <div
+                key={index}
+                className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 group"
+              >
                 <Image
                   src={URL.createObjectURL(file)}
                   alt={`Attachment ${index + 1}`}
@@ -303,11 +318,23 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
                 />
                 <button
                   type="button"
-                  onClick={() => setAttachments(prev => prev.filter((_, i) => i !== index))}
+                  onClick={() =>
+                    setAttachments((prev) => prev.filter((_, i) => i !== index))
+                  }
                   className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-2.5 h-2.5 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -321,20 +348,29 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
             className="p-1.5 rounded-lg bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:bg-gray-700/50 transition-all duration-300 flex-shrink-0"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-6c.78 2.34 2.72 4 5 4s4.22-1.66 5-4H7zm8-3c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1zm-6 0c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1z"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-6c.78 2.34 2.72 4 5 4s4.22-1.66 5-4H7zm8-3c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1zm-6 0c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1z" />
             </svg>
           </button>
           <div className="flex-1 min-h-[36px] max-h-24 bg-gray-800/50 rounded-lg flex items-end">
             <textarea
               value={message}
+              onClick={() => {
+                setTimeout(() => {
+                  window.scrollTo({
+                  top: 0,
+                  behavior: "smooth", // You can use 'auto' for instant scroll
+                });
+                },100)
+              }}
               onChange={(e) => {
                 setMessage(e.target.value);
                 handleTyping();
-                e.target.style.height = 'auto';
-                e.target.style.height = Math.min(e.target.scrollHeight, 96) + 'px';
+                e.target.style.height = "auto";
+                e.target.style.height =
+                  Math.min(e.target.scrollHeight, 96) + "px";
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage(e);
                 }
@@ -349,8 +385,18 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
             onClick={() => fileInputRef.current?.click()}
             className="p-1.5 rounded-lg bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:bg-gray-700/50 transition-all duration-300 flex-shrink-0"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+              />
             </svg>
           </button>
           <input
