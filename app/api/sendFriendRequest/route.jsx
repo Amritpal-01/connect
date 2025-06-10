@@ -69,13 +69,15 @@ export async function POST(request) {
       );
     }
 
+    let id = [user.uid, friend.uid].sort().join("szrad");
+
     let currentRoom = await Room.findOne({
-      roomId: [user.uid, friend.uid].sort().join("szrad")
+      roomId: id
     });
 
     if(!currentRoom){
       let newRoom = new Room({
-      roomId: [user.uid, friend.uid].sort().join("szrad"),
+      roomId: id,
       messages: [],
       })
 
@@ -84,7 +86,7 @@ export async function POST(request) {
 
     await user.save();
 
-    return NextResponse.json({ status: 200 });
+    return NextResponse.json({ status: 200, id : id });
   } catch {
     return NextResponse.json({ message: "internal server error", status: 500 });
   }

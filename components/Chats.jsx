@@ -22,10 +22,12 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [userScrollHeight, setUserScrollHeight] = useState(0);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const header = useRef();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,10 +37,17 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
 
-    const { scrollTop, scrollHeight, clientHeight } =
-      messagesContainerRef.current;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    setShowScrollButton(!isNearBottom);
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+
+    const isNeadBottom = scrollHeight - clientHeight - scrollTop < 200;
+    
+    if(!isNeadBottom){
+      setShowScrollButton(true)
+    }else{
+      setShowScrollButton(false)
+    }
+
+    setUserScrollHeight(scrollHeight - scrollTop - clientHeight);
   };
 
   useEffect(() => {
@@ -52,26 +61,28 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   // Scroll to bottom when chat is opened
   useEffect(() => {
     if (activePanelMain === "room" && !isloadingMessages) {
-      setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
         setShowScrollButton(false);
-      }, 100); // Small delay to ensure DOM is ready
     }
   }, [activePanelMain, isloadingMessages]);
 
-  useEffect(() => {
+  const smartScroll = () => {
     if (messages.length > 0) {
       const container = messagesContainerRef.current;
       if (container) {
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+        const isNearBottom = userScrollHeight < 200;
         if (isNearBottom) {
           scrollToBottom();
+          setShowScrollButton(false);
         } else {
           setShowScrollButton(true);
         }
       }
     }
+  };
+
+  useEffect(() => {
+    smartScroll();
   }, [messages]);
 
   const handleEmojiClick = (emojiObject) => {
@@ -96,6 +107,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
+
     if (!message.trim() && attachments.length === 0) return;
 
     const newMessage = {
@@ -104,6 +116,8 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       timestamp: new Date(),
       attachments: attachments,
     };
+
+    setMessage("");
 
     setMessages([...messages, newMessage]);
 
@@ -122,24 +136,16 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       }),
     });
 
-    setMessage("");
     setAttachments([]);
   };
 
-  if (isloadingMessages)
-    return (
-      <div className="w-full h-[100dvh] flex items-center justify-center ">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-400 font-medium">Loading...</p>
-        </div>
-      </div>
-    );
-
   return (
-    <div className="h-full flex flex-col bg-gray-900/50 backdrop-blur-sm">
+    <div className="h-full w-full flex flex-col bg-gray-900/50 backdrop-blur-sm">
       {/* Header */}
-      <div className="flex z-10 max-[800px]:fixed top-0 w-full items-center justify-between border-b border-gray-700/50 bg-gray-800/30 backdrop-blur-sm">
+      <div
+        ref={header}
+        className="flex z-10 w-full items-center justify-between border-b border-gray-700/50 bg-gray-800/30 backdrop-blur-sm"
+      >
         <button
           onClick={() => setActivePanelMain("chats")}
           className={`pl-2 pr-1 rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm min-[800px]:hidden ${
@@ -181,102 +187,99 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto max-[800px]:pt-15 space-y-2 p-2 scrollbar-thin-custom relative"
+        className="flex-1  overflow-y-auto space-y-2 p-2 scrollbar-thin-custom relative"
       >
-        <AnimatePresence>
-          {messages.map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.15 }}
-              className={`flex ${
-                msg.sender === userData.username
-                  ? "justify-end"
-                  : "justify-start"
-              }`}
-            >
-              {msg.sender !== userData.username && (
-                <div className="flex-shrink-0 mr-1 self-end">
-                  <div className="w-6 h-6 rounded-full overflow-hidden">
-                    <Image
-                      src={activeFriend?.friendPhotoURL || "/noProfile.jpg"}
-                      alt="profile"
-                      width={24}
-                      height={24}
-                      className="object-cover"
-                    />
-                  </div>
-                </div>
-              )}
+        {isloadingMessages ? (
+          <div className="w-full flex items-center justify-center "></div>
+        ) : (
+          <div>
+            {messages.map((msg, i) => (
               <div
-                className={`max-w-[85%] rounded-2xl px-3 py-1.5 ${
+                key={i}
+                className={`flex messagesIn p-2 fadeIn ${
                   msg.sender === userData.username
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-700 text-gray-100"
+                    ? "justify-end"
+                    : "justify-start"
                 }`}
               >
-                {msg.attachments?.length > 0 && (
-                  <div className="grid grid-cols-2 gap-1 mb-1">
-                    {msg.attachments.map((file, index) => (
-                      <div
-                        key={index}
-                        className="relative aspect-square rounded-lg overflow-hidden"
-                      >
-                        <Image
-                          src={URL.createObjectURL(file)}
-                          alt={`Attachment ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ))}
+                {msg.sender !== userData.username && (
+                  <div className="flex-shrink-0 mr-1 self-end">
+                    <div className="w-6 h-6 rounded-full overflow-hidden">
+                      <Image
+                        src={activeFriend?.friendPhotoURL || "/noProfile.jpg"}
+                        alt="profile"
+                        width={24}
+                        height={24}
+                        className="object-cover"
+                      />
+                    </div>
                   </div>
                 )}
-                <p className="text-sm whitespace-pre-wrap break-words">
-                  {msg.text}
-                </p>
-                <p
-                  className={`text-[10px] mt-0.5 ${
+                <div
+                  className={`max-w-[85%] rounded-2xl px-3 py-1.5 ${
                     msg.sender === userData.username
-                      ? "text-blue-100"
-                      : "text-gray-400"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-700 text-gray-100"
                   }`}
                 >
-                  {new Date(msg.timestamp).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </p>
-              </div>
-              {msg.sender === userData.username && (
-                <div className="flex-shrink-0 ml-1 self-end">
-                  <div className="w-6 h-6 rounded-full overflow-hidden">
-                    <Image
-                      src={userData.photoURL || "/noProfile.jpg"}
-                      alt="profile"
-                      width={24}
-                      height={24}
-                      className="object-cover"
-                    />
-                  </div>
+                  {msg.attachments?.length > 0 && (
+                    <div className="grid grid-cols-2 gap-1 mb-1">
+                      {msg.attachments.map((file, index) => (
+                        <div
+                          key={index}
+                          className="relative aspect-square rounded-lg overflow-hidden"
+                        >
+                          <Image
+                            src={URL.createObjectURL(file)}
+                            alt={`Attachment ${index + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-sm whitespace-pre-wrap break-words">
+                    {msg.text}
+                  </p>
+                  <p
+                    className={`text-[10px] mt-0.5 ${
+                      msg.sender === userData.username
+                        ? "text-blue-100"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {new Date(msg.timestamp).toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </p>
                 </div>
-              )}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+                {msg.sender === userData.username && (
+                  <div className="flex-shrink-0 ml-1 self-end">
+                    <div className="w-6 h-6 rounded-full overflow-hidden">
+                      <Image
+                        src={userData.photoURL || "/noProfile.jpg"}
+                        alt="profile"
+                        width={24}
+                        height={24}
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Scroll to Bottom Button */}
-      <AnimatePresence>
         {showScrollButton && (
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+          <button
             onClick={scrollToBottom}
             className="absolute bottom-24 right-6 p-3 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-500 transition-all duration-300 z-10"
           >
@@ -294,9 +297,8 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
                 d="M19 14l-7 7m0 0l-7-7m7 7V3"
               />
             </svg>
-          </motion.button>
+          </button>
         )}
-      </AnimatePresence>
 
       {/* Message Input */}
       <form
@@ -354,13 +356,17 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
           <div className="flex-1 min-h-[36px] max-h-24 bg-gray-800/50 rounded-lg flex items-end">
             <textarea
               value={message}
-              onClick={() => {
-                setTimeout(() => {
-                  window.scrollTo({
-                  top: 0,
-                  behavior: "smooth", // You can use 'auto' for instant scroll
-                });
-                },100)
+              onFocus={() => {
+                setTimeout(async () => {
+                  if(userScrollHeight < 400){
+                    scrollToBottom();
+                  }
+
+                  await header.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }, 300);
               }}
               onChange={(e) => {
                 setMessage(e.target.value);

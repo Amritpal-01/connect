@@ -4,10 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
 import { useChat } from "@/contexts/ChatContext";
+import { openDB } from "idb";
 
 const Requests = () => {
-  const { sendFriendRequstThroughSocket } = useChat();
-  const { currentUser, userData, isLoadingSession, fetchUserData } = useAuth();
+  const { sendFriendRequstThroughSocket, db } = useChat();
+  const { currentUser, userData, fetchUserData } = useAuth();
   const [addByUsernameToggle, setAddByUsernameToggle] = useState(false);
   const [friendRequests, setFriendRequests] = useState([]);
   const [friendname, setFriendname] = useState("");
@@ -34,8 +35,18 @@ const Requests = () => {
         throw new Error("Failed to accept friend request");
       }
 
-      const data = await response.json();
-      console.log(data);
+      const roomData = await response.json();
+
+      const room = roomData.id;
+
+      const currentRoom = await db.get("rooms", room);
+
+      if (!currentRoom) {
+        await db.add("rooms", {
+          id: room,
+          messages: [],
+        });
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -47,6 +58,8 @@ const Requests = () => {
 
   const sendFriendRequest = async () => {
     try {
+      if (!db) throw new Error("Failed to send friend request");
+
       setIsLoading(true);
       const response = await fetch("/api/sendFriendRequest", {
         method: "POST",
@@ -61,7 +74,19 @@ const Requests = () => {
         throw new Error("Failed to send friend request");
       }
 
-      const data = await response.json();
+      let roomData = await response.json();
+
+      const room = roomData.id
+
+      const currentRoom = await db.get("rooms", room);
+
+      if (!currentRoom) {
+        await db.add("rooms", {
+          id: room,
+          messages: [],
+        });
+      }
+
       sendFriendRequstThroughSocket(friendname);
       setFriendname("");
       setAddByUsernameToggle(false);

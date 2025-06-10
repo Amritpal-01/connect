@@ -5,17 +5,38 @@
 import { createContext, useEffect, useState, useContext } from "react";
 import { socket } from "../socket";
 import { useAuth } from "./AuthContext";
+import { openDB } from "idb";
 
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-  const { userData,fetchUserData } = useAuth();
+  const { userData, fetchUserData } = useAuth();
   const [activeFriend, setActiveFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [currentRoomId, setCurrentRoomId] = useState(null);
   const [isloadingMessages, setIsloadingMessages] = useState(null);
+  const [db, setDb] = useState(null);
+
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
+
+  useEffect(() => {
+    async function initDB() {
+      // indexedDB.deleteDatabase("ChatDB");
+      const dbInstance = await openDB("ChatDB", 1, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("rooms")) {
+            db.createObjectStore("rooms", { keyPath: "id" });
+          }
+        },
+      });
+
+      setDb(dbInstance);
+      console.log("DB ready");
+    }
+
+    initDB();
+  }, []);
 
   const getMessages = async () => {
     setIsloadingMessages(true);
@@ -30,15 +51,74 @@ export const ChatProvider = ({ children }) => {
     });
 
     const res = await response.json();
-    setMessages(res.currentRoom.messages);
-    setCurrentRoomId(res.currentRoom.roomId);
+
+    const room = res.currentRoom.roomId;
+
+    const currentRoom = await db.get("rooms", room);
+
+    if (!currentRoom) {
+      await db.add("rooms", {
+        id: room,
+        messages: [],
+      });
+    }
+
+    const newRoom = currentRoom;
+
+    const oldMessages = currentRoom ? currentRoom.messages : [];
+    const newMessages = res.currentRoom.messages;
+    let isThereAnyNewMessage = false;
+
+    if (newMessages.length != 0) {
+      const lastOldMessage = {
+        text: oldMessages[oldMessages.length - 1].text,
+        sender: oldMessages[oldMessages.length - 1].sender,
+      };
+
+      const lastNewMessage = {
+        text: newMessages[newMessages.length - 1].text,
+        sender: newMessages[newMessages.length - 1].sender,
+      };
+
+      console.log(
+        "dkgbsjdhgksjldfhgkjsh",
+        lastNewMessage,
+        lastOldMessage,
+        lastNewMessage.sender == lastOldMessage.sender &&
+          lastNewMessage.text == lastOldMessage.text
+      );
+
+      isThereAnyNewMessage = !(
+        lastNewMessage.sender == lastOldMessage.sender &&
+        lastNewMessage.text == lastOldMessage.text
+      );
+    }
+
+    if (isThereAnyNewMessage) {
+      newRoom.messages = [...oldMessages, ...newMessages];
+
+      await db.put("rooms", newRoom);
+
+      const anotherResponse = await fetch("/api/deleteMessages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userUid: userData.uid,
+          friendUid: activeFriend.friendUid,
+        }),
+      });
+    }
+
+    setMessages(newRoom.messages);
+    setCurrentRoomId(room);
     setIsloadingMessages(false);
   };
 
   useEffect(() => {
+    if (!db) return;
     if (!activeFriend) return;
     getMessages();
-  }, [activeFriend]);
+  }, [activeFriend, db]);
 
   useEffect(() => {
     if (!userData) return;
@@ -57,15 +137,26 @@ export const ChatProvider = ({ children }) => {
       setTransport("N/A");
     };
 
-    const onReceiveMessage = ({ message }) => {
+    const onReceiveMessage = async ({ message, roomId }) => {
+      const currentRoom = await db.get("rooms", roomId);
+
+      const newRoom = currentRoom;
+
+      const oldMessages = currentRoom.messages;
+      const newMessages = message;
+
+      newRoom.messages = [...oldMessages, newMessages];
+
+      await db.put("rooms", newRoom);
+
       setMessages((prevMessages) => [...prevMessages, message]);
     };
 
     const onFr = () => {
       fetchUserData();
-    }
+    };
 
-    socket.on("receivePrivateFriendRequest", onFr)
+    socket.on("receivePrivateFriendRequest", onFr);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("receivePrivateMessage", onReceiveMessage);
@@ -80,18 +171,30 @@ export const ChatProvider = ({ children }) => {
     };
   }, [userData]);
 
-  const sendPrivateMessage = (message) => {
+  const sendPrivateMessage = async (message) => {
+    const currentRoom = await db.get("rooms", currentRoomId);
+
+    const newRoom = currentRoom;
+
+    const oldMessages = currentRoom.messages;
+    const newMessages = message;
+
+    newRoom.messages = [...oldMessages, newMessages];
+
+    await db.put("rooms", newRoom);
+
     socket.emit("privateMessage", {
       to: activeFriend.friendUsername,
+      roomId: currentRoomId,
       message,
     });
   };
 
   const sendFriendRequstThroughSocket = (friendname) => {
     socket.emit("privateFriendRequest", {
-      to: friendname
+      to: friendname,
     });
-  }
+  };
 
   return (
     <ChatContext.Provider
@@ -103,7 +206,8 @@ export const ChatProvider = ({ children }) => {
         currentRoomId,
         sendPrivateMessage,
         isloadingMessages,
-        sendFriendRequstThroughSocket
+        sendFriendRequstThroughSocket,
+        db,
       }}
     >
       {children}

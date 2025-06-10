@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-b from-gray-900 to-gray-800`}
+        className={`${geistSans.variable} ${geistMono.variable}  max-h-[100vh] antialiased bg-gradient-to-b from-gray-900 to-gray-800`}
       >
         <AuthProvider>
           <ChatProvider>{children}</ChatProvider>

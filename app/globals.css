@@ -51,6 +51,25 @@ h4{
   }
 }
 
+@keyframes messagesin {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+  }
+}
+
+.messagesIn{
+  animation-delay: 0.3s;
+ opacity: 0; 
+  animation: messagesin 0.3s ease-out forwards;
+}
+
 .fadeAway {
     transform: translateY(0);
   animation: fadeaway 0.3s ease-out forwards;
