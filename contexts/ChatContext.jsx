@@ -76,7 +76,7 @@ export const ChatProvider = ({ children }) => {
     const newMessages = res.currentRoom.messages;
     let isThereAnyNewMessage = false;
 
-    if (newMessages.length != 0 || oldMessages.length != 0) {
+    if (newMessages.length != 0 && oldMessages.length != 0) {
         const lastOldMessage = {
           text: oldMessages[oldMessages.length - 1].text,
           sender: oldMessages[oldMessages.length - 1].sender,
