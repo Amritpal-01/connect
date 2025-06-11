@@ -54,42 +54,51 @@ export const ChatProvider = ({ children }) => {
 
     const room = res.currentRoom.roomId;
 
-    const currentRoom = await db.get("rooms", room);
-
-    if (!currentRoom) {
+    let currentRoom;
+    try {
+      currentRoom = await db.get("rooms", room);
+      if(!currentRoom) throw new Error("room not found")
+    } catch {
       await db.add("rooms", {
         id: room,
         messages: [],
       });
+      currentRoom = await db.get("rooms", room); // 🟢 Re-fetch after adding
     }
 
-    const newRoom = currentRoom;
+    let newRoom = currentRoom;
 
     const oldMessages = currentRoom ? currentRoom.messages : [];
     const newMessages = res.currentRoom.messages;
-    let isThereAnyNewMessage = true;
+    let isThereAnyNewMessage = false;
 
-    if (newMessages.length != 0 && oldMessages?.length != 0) {
-      const lastOldMessage = {
-        text: oldMessages[oldMessages.length - 1].text,
-        sender: oldMessages[oldMessages.length - 1].sender,
-      };
+    if (newMessages.length != 0) {
+      if (oldMessages.length != 0) {
+        const lastOldMessage = {
+          text: oldMessages[oldMessages.length - 1].text,
+          sender: oldMessages[oldMessages.length - 1].sender,
+        };
 
-      const lastNewMessage = {
-        text: newMessages[newMessages.length - 1].text,
-        sender: newMessages[newMessages.length - 1].sender,
-      };
+        const lastNewMessage = {
+          text: newMessages[newMessages.length - 1].text,
+          sender: newMessages[newMessages.length - 1].sender,
+        };
 
-      
-
-      isThereAnyNewMessage = !(
-        lastNewMessage.sender == lastOldMessage.sender &&
-        lastNewMessage.text == lastOldMessage.text
-      );
+        isThereAnyNewMessage = !(
+          lastNewMessage.sender == lastOldMessage.sender &&
+          lastNewMessage.text == lastOldMessage.text
+        );
+      } else {
+        isThereAnyNewMessage = true;
+      }
     }
 
     if (isThereAnyNewMessage) {
-      newRoom.messages = [...oldMessages, ...newMessages];
+      if (oldMessages.length != 0) {
+        newRoom.messages = [...oldMessages, ...newMessages];
+      } else {
+        newRoom.messages = newMessages;
+      }
 
       await db.put("rooms", newRoom);
 
