@@ -72,7 +72,8 @@ export const ChatProvider = ({ children }) => {
     const newMessages = res.currentRoom.messages;
     let isThereAnyNewMessage = false;
 
-    if (newMessages.length != 0 && oldMessages.length != 0) {
+    if (newMessages.length != 0) {
+      if (oldMessages.length != 0) {
         const lastOldMessage = {
           text: oldMessages[oldMessages.length - 1].text,
           sender: oldMessages[oldMessages.length - 1].sender,
@@ -87,7 +88,14 @@ export const ChatProvider = ({ children }) => {
           lastNewMessage.sender == lastOldMessage.sender &&
           lastNewMessage.text == lastOldMessage.text
         );
+      } else {
+        isThereAnyNewMessage = true;
+      }
     }
+
+      if(oldMessages.length == 0){
+        isThereAnyNewMessage = false;
+      }
 
     if (isThereAnyNewMessage) {
       if (oldMessages.length != 0) {
