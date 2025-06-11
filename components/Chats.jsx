@@ -356,10 +356,6 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
               value={message}
               onFocus={() => {
                 setTimeout(async () => {
-                  if(userScrollHeight < 400){
-                    scrollToBottom();
-                  }
-
                   await header.current?.scrollIntoView({
                     behavior: "smooth",
                     block: "start",
