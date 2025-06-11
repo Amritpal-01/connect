@@ -22,7 +22,7 @@ export const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     async function initDB() {
-      // indexedDB.deleteDatabase("ChatDB");
+      indexedDB.deleteDatabase("ChatDB");
       const dbInstance = await openDB("ChatDB", 1, {
         upgrade(db) {
           if (!db.objectStoreNames.contains("rooms")) {
