@@ -67,9 +67,9 @@ export const ChatProvider = ({ children }) => {
 
     const oldMessages = currentRoom ? currentRoom.messages : [];
     const newMessages = res.currentRoom.messages;
-    let isThereAnyNewMessage = false;
+    let isThereAnyNewMessage = true;
 
-    if (newMessages.length != 0) {
+    if (newMessages.length != 0 && oldMessages?.length != 0) {
       const lastOldMessage = {
         text: oldMessages[oldMessages.length - 1].text,
         sender: oldMessages[oldMessages.length - 1].sender,
@@ -80,13 +80,7 @@ export const ChatProvider = ({ children }) => {
         sender: newMessages[newMessages.length - 1].sender,
       };
 
-      console.log(
-        "dkgbsjdhgksjldfhgkjsh",
-        lastNewMessage,
-        lastOldMessage,
-        lastNewMessage.sender == lastOldMessage.sender &&
-          lastNewMessage.text == lastOldMessage.text
-      );
+      
 
       isThereAnyNewMessage = !(
         lastNewMessage.sender == lastOldMessage.sender &&
