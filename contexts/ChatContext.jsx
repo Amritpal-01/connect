@@ -22,7 +22,7 @@ export const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     async function initDB() {
-      indexedDB.deleteDatabase("ChatDB");
+      // indexedDB.deleteDatabase("ChatDB");
       const dbInstance = await openDB("ChatDB", 2, {
         upgrade(db) {
           if (!db.objectStoreNames.contains("rooms")) {
@@ -57,8 +57,10 @@ export const ChatProvider = ({ children }) => {
     let currentRoom;
     try {
       currentRoom = await db.get("rooms", room);
-      if(!currentRoom) throw new Error("room not found")
+      if (!currentRoom) throw new Error("room not found");
     } catch {
+      
+      console.log("room not found")
       await db.add("rooms", {
         id: room,
         messages: [],
@@ -68,12 +70,13 @@ export const ChatProvider = ({ children }) => {
 
     let newRoom = currentRoom;
 
+    console.log(newRoom);
+
     const oldMessages = currentRoom.messages;
     const newMessages = res.currentRoom.messages;
     let isThereAnyNewMessage = false;
 
-    if (newMessages.length != 0) {
-      if (oldMessages.length != 0) {
+    if (newMessages.length != 0 || oldMessages.length != 0) {
         const lastOldMessage = {
           text: oldMessages[oldMessages.length - 1].text,
           sender: oldMessages[oldMessages.length - 1].sender,
@@ -88,14 +91,8 @@ export const ChatProvider = ({ children }) => {
           lastNewMessage.sender == lastOldMessage.sender &&
           lastNewMessage.text == lastOldMessage.text
         );
-      } else {
-        isThereAnyNewMessage = true;
-      }
     }
 
-      if(oldMessages.length == 0){
-        isThereAnyNewMessage = false;
-      }
 
     if (isThereAnyNewMessage) {
       if (oldMessages.length != 0) {
@@ -115,6 +112,8 @@ export const ChatProvider = ({ children }) => {
         }),
       });
     }
+
+    console.log(newRoom);
 
     setMessages(newRoom.messages);
     setCurrentRoomId(room);
@@ -145,14 +144,26 @@ export const ChatProvider = ({ children }) => {
     };
 
     const onReceiveMessage = async ({ message, roomId }) => {
-      const currentRoom = await db.get("rooms", roomId);
+      let currentRoom;
+      try {
+        currentRoom = await db.get("rooms", roomId);
+        if (!currentRoom) throw new Error("room not found");
+      } catch {
+        await db.add("rooms", {
+          id: room,
+          messages: [],
+        });
+        currentRoom = await db.get("rooms", roomId); // 🟢 Re-fetch after adding
+      }
 
-      const newRoom = currentRoom;
+      let newRoom = currentRoom;
 
       const oldMessages = currentRoom.messages;
       const newMessages = message;
 
       newRoom.messages = [...oldMessages, newMessages];
+
+      console.log(newRoom.messages)
 
       await db.put("rooms", newRoom);
 
@@ -181,12 +192,14 @@ export const ChatProvider = ({ children }) => {
   const sendPrivateMessage = async (message) => {
     const currentRoom = await db.get("rooms", currentRoomId);
 
-    const newRoom = currentRoom;
+    let newRoom = currentRoom;
 
     const oldMessages = currentRoom.messages;
     const newMessages = message;
 
     newRoom.messages = [...oldMessages, newMessages];
+
+    console.log(newRoom)
 
     await db.put("rooms", newRoom);
 
