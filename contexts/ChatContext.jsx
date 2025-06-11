@@ -68,7 +68,7 @@ export const ChatProvider = ({ children }) => {
 
     let newRoom = currentRoom;
 
-    const oldMessages = currentRoom ? currentRoom.messages : [];
+    const oldMessages = currentRoom.messages;
     const newMessages = res.currentRoom.messages;
     let isThereAnyNewMessage = false;
 
