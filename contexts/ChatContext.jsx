@@ -64,7 +64,7 @@ export const ChatProvider = ({ children }) => {
     const oldMessages = currentRoom.messages;
     const newMessages = activeFriend.unSeenMessages;
 
-    console.log(newMessages, "<-----------")
+    console.log(newMessages)
 
     newRoom.messages = [...oldMessages, ...newMessages];
 
@@ -72,6 +72,12 @@ export const ChatProvider = ({ children }) => {
 
     setMessages(newRoom.messages);
     setIsloadingMessages(false);
+    
+    userData.friends.map(friend => {
+      if(friend == activeFriend){
+        friend.unSeenMessages = []
+      }
+    })
   };
 
   useEffect(() => {
