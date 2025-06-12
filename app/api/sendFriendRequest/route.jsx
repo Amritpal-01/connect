@@ -3,7 +3,6 @@
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import UserData from "@/app/models/userData";
-import Room from "@/app/models/Room";
 
 export async function POST(request) {
   try {
@@ -22,36 +21,39 @@ export async function POST(request) {
       return NextResponse.json({ message: "friend not found", status: 500 });
     }
 
+    let id = [user.uid, friend.uid].sort().join("szrad");
+
     const a = await UserData.findOne({
       _id: user._id,
-      "friends.friendUsername": body.friendname, // assuming 'body.friendname' holds the username
+      "friends.username": body.friendname, // assuming 'body.friendname' holds the username
     });
 
-    console.log(a);
+    
 
     if (a == null) {
       user.friends.push({
-        friendUid: friend.uid,
-        friendDisplayName: friend.displayName,
-        friendBio: friend.bio,
-        friendDob: friend.dob,
-        friendUsername: friend.username,
-        friendPhotoURL: friend.photoURL,
+        roomId: id,
+        uid: friend.uid,
+        username: friend.username,
+        displayName: friend.profile.displayName,
+        photoURL: friend.profile.photoURL,
+        unSeenMessages: [],
       });
     }
 
     if (!body.typeAccept) {
       const b = await UserData.findOne({
         _id: friend._id,
-        "friendRequests.friendUsername": user.username, // assuming 'body.friendname' holds the username
+        "friendRequests.username": user.username, // assuming 'body.friendname' holds the username
       });
+
 
       if (b == null) {
         friend.friendRequests.push({
-          friendUid: user.uid,
-          friendDisplayName: user.displayName,
-          friendUsername: user.username,
-          friendPhotoURL: user.photoURL,
+          uid: user.uid,
+          displayName: user.profile.displayName,
+          username: user.username,
+          photoURL: user.profile.photoURL,
         });
       }
 
@@ -63,30 +65,15 @@ export async function POST(request) {
         { _id: user._id },
         {
           $pull: {
-            friendRequests: { friendUsername: body.friendname }, // make sure this value is correct
+            friendRequests: { username: body.friendname }, // make sure this value is correct
           },
         }
       );
     }
 
-    let id = [user.uid, friend.uid].sort().join("szrad");
-
-    let currentRoom = await Room.findOne({
-      roomId: id
-    });
-
-    if(!currentRoom){
-      let newRoom = new Room({
-      roomId: id,
-      messages: [],
-      })
-
-      await newRoom.save();
-    }
-
     await user.save();
 
-    return NextResponse.json({ status: 200, id : id });
+    return NextResponse.json({ status: 200, id: id });
   } catch {
     return NextResponse.json({ message: "internal server error", status: 500 });
   }

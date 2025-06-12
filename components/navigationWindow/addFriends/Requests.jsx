@@ -16,6 +16,7 @@ const Requests = () => {
 
   useEffect(() => {
     if (userData) setFriendRequests(userData.friendRequests);
+    console.log(userData.friendRequests)
   }, [userData]);
 
   const acceptFriendRequest = async (username) => {
@@ -38,6 +39,8 @@ const Requests = () => {
       const roomData = await response.json();
 
       const room = roomData.id;
+
+      console.log(roomData)
 
       const currentRoom = await db.get("rooms", room);
 
@@ -74,18 +77,20 @@ const Requests = () => {
         throw new Error("Failed to send friend request");
       }
 
-      let roomData = await response.json();
+      const roomData = await response.json();
 
-      const room = roomData.id
+      console.log(roomData)
 
-      const currentRoom = await db.get("rooms", room);
+      // const room = roomData.id
 
-      if (!currentRoom) {
-        await db.add("rooms", {
-          id: room,
-          messages: [],
-        });
-      }
+      // const currentRoom = await db.get("rooms", room);
+
+      // if (!currentRoom) {
+      //   await db.add("rooms", {
+      //     id: room,
+      //     messages: [],
+      //   });
+      // }
 
       sendFriendRequstThroughSocket(friendname);
       setFriendname("");
@@ -159,7 +164,7 @@ const Requests = () => {
             ) : (
               friendRequests.map((request) => (
                 <div
-                  key={request.friendUid}
+                  key={request.uid}
                   className="w-full bg-gray-800/50 rounded-xl p-4 space-y-4"
                 >
                   <div className="flex items-center gap-3">
@@ -167,21 +172,21 @@ const Requests = () => {
                       <Image
                         fill
                         alt="profilePic"
-                        src={request.friendPhotoURL || "/noProfile.jpg"}
+                        src={request.photoURL || "/noProfile.jpg"}
                         className="object-cover"
                       />
                     </div>
                     <div className="flex-1">
                       <h1 className="text-white font-medium">
-                        {request.friendDisplayName}
+                        {request.displayName}
                       </h1>
                       <p className="text-sm text-gray-400">
-                        @{request.friendUsername}
+                        @{request.username}
                       </p>
                     </div>
                     <button
                       onClick={() =>
-                        acceptFriendRequest(request.friendUsername)
+                        acceptFriendRequest(request.username)
                       }
                       disabled={isLoading}
                       className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"

@@ -1,18 +1,16 @@
 /** @format */
 
-// @format
-
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
-import Room from "@/app/models/Room"; // Adjust the path based on your file structure
+import UserData from "@/app/models/userData";
 
 export async function POST(request) {
   try {
     // Parse incoming data
-    const { roomId, message } = await request.json();
+    const { friendname, message, username } = await request.json();
 
     // Validate incoming data
-    if (!roomId || !message || !message.text || !message.sender) {
+    if (!friendname || !message || !message.text || !message.sender || !username) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -22,27 +20,39 @@ export async function POST(request) {
     // Connect to MongoDB
     await mongoose.connect(`${process.env.MONGODB_URI}connect`);
 
-    // Find the room
-    let room = await Room.findOne({ roomId });
+    // Find the user document of the friend (i.e., the message receiver)
+    let friend = await UserData.findOne({ username: friendname });
 
-    // If room doesn't exist, create it
-    if (!room) {
-      room = new Room({ roomId, messages: [] });
+    if (!friend) {
+      return NextResponse.json(
+        { error: "Friend not found" },
+        { status: 404 }
+      );
     }
 
-    // Add message with timestamp
-    room.messages.push({ //even tho i worte it ignoring the body its still isnt working
+    // Find the correct 'friend' object in their `friends` array
+    let userInFriendList = friend.friends.find(f => f.username === username);
+
+    if (!userInFriendList) {
+      return NextResponse.json(
+        { error: "Sender not found in friend's friend list" },
+        { status: 404 }
+      );
+    }
+
+    // Add unseen message
+    userInFriendList.unSeenMessages.push({
       text: message.text,
       sender: message.sender,
       timestamp: new Date(),
     });
 
-    // Save updated room
-    await room.save();
+    // Save changes
+    await friend.save();
 
     return NextResponse.json({
       success: true,
-      message: "Message added successfully",
+      message: "Message added successfully to unseen messages",
     });
 
   } catch (error) {

@@ -1,33 +1,41 @@
+/** @format */
+
 import mongoose, { model, Schema } from "mongoose";
 
-
-const friendRequests = new Schema({
-    friendUid: String,
-    friendDisplayName: String,
-    friendUsername : String,
-    friendPhotoURL : String,
+const messageSchema = new Schema({
+    text : String,
+    sender : String,
+    timestamp : Date
 })
+
+const requestSchema = new Schema({
+  uid: String,
+  displayName: String,
+  username: String,
+  photoURL: String,
+});
 
 const friendSchema = new Schema({
-    friendUid: String,
-    friendDisplayName: String,
-    friendBio : String,
-    friendDob : Date,
-    friendUsername : String,
-    friendPhotoURL : String,
-})
-
+  roomId : String,
+  uid : String,
+  displayName: String,
+  username: String,
+  photoURL: String,
+  unSeenMessages : [messageSchema]
+});
 
 const UserDataSchema = new Schema({
-    uid: String,
+  uid: String,
+  username: String,
+  profile: {
     displayName: String,
-    bio : String,
-    dob : Date,
-    username : String,
-    email : String,
-    photoURL : String,
-    friends : [friendSchema],
-    friendRequests : [friendRequests]
+    bio: String,
+    dob: Date,
+    email: String,
+    photoURL: String,
+  },
+  friends: [friendSchema],
+  friendRequests: [requestSchema],
 });
 
 const UserData = mongoose.models.UserData || model("UserData", UserDataSchema);

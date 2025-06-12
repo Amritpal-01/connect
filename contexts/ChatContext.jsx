@@ -13,7 +13,6 @@ export const ChatProvider = ({ children }) => {
   const { userData, fetchUserData } = useAuth();
   const [activeFriend, setActiveFriend] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [currentRoomId, setCurrentRoomId] = useState(null);
   const [isloadingMessages, setIsloadingMessages] = useState(null);
   const [db, setDb] = useState(null);
 
@@ -41,26 +40,16 @@ export const ChatProvider = ({ children }) => {
   const getMessages = async () => {
     setIsloadingMessages(true);
     setMessages([]);
-    const response = await fetch("/api/getMessages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userUid: userData.uid,
-        friendUid: activeFriend.friendUid,
-      }),
-    });
 
-    const res = await response.json();
-
-    const room = res.currentRoom.roomId;
+    const room = activeFriend.roomId;
 
     let currentRoom;
+
     try {
       currentRoom = await db.get("rooms", room);
       if (!currentRoom) throw new Error("room not found");
     } catch {
-      
-      console.log("room not found")
+      console.log("room not found");
       await db.add("rooms", {
         id: room,
         messages: [],
@@ -73,50 +62,14 @@ export const ChatProvider = ({ children }) => {
     console.log(newRoom);
 
     const oldMessages = currentRoom.messages;
-    const newMessages = res.currentRoom.messages;
-    let isThereAnyNewMessage = false;
+    const newMessages = activeFriend.unSeenMessages;
+    let isThereAnyNewMessage = !(newMessages.length == 0);
 
-    if (newMessages.length != 0 && oldMessages.length != 0) {
-        const lastOldMessage = {
-          text: oldMessages[oldMessages.length - 1].text,
-          sender: oldMessages[oldMessages.length - 1].sender,
-        };
+    newRoom.messages = [...oldMessages, ...newMessages];
 
-        const lastNewMessage = {
-          text: newMessages[newMessages.length - 1].text,
-          sender: newMessages[newMessages.length - 1].sender,
-        };
-
-        isThereAnyNewMessage = !(
-          lastNewMessage.sender == lastOldMessage.sender &&
-          lastNewMessage.text == lastOldMessage.text
-        );
-    }
-
-
-    if (isThereAnyNewMessage) {
-      if (oldMessages.length != 0) {
-        newRoom.messages = [...oldMessages, ...newMessages];
-      } else {
-        newRoom.messages = newMessages;
-      }
-
-      await db.put("rooms", newRoom);
-
-      const anotherResponse = await fetch("/api/deleteMessages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userUid: userData.uid,
-          friendUid: activeFriend.friendUid,
-        }),
-      });
-    }
-
-    console.log(newRoom);
+    await db.put("rooms", newRoom);
 
     setMessages(newRoom.messages);
-    setCurrentRoomId(room);
     setIsloadingMessages(false);
   };
 
@@ -143,7 +96,7 @@ export const ChatProvider = ({ children }) => {
       setTransport("N/A");
     };
 
-    const onReceiveMessage = async ({ message, roomId }) => {
+    const onReceiveMessage = async ({ message, roomId, forWhome }) => {
       let currentRoom;
       try {
         currentRoom = await db.get("rooms", roomId);
@@ -163,8 +116,6 @@ export const ChatProvider = ({ children }) => {
 
       newRoom.messages = [...oldMessages, newMessages];
 
-      console.log(newRoom.messages)
-
       await db.put("rooms", newRoom);
 
       setMessages((prevMessages) => [...prevMessages, message]);
@@ -174,10 +125,22 @@ export const ChatProvider = ({ children }) => {
       fetchUserData();
     };
 
+    const deleteUnSeenMessages = async ({ from }) => {
+      let response = await fetch("/api/deleteMessages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          friendname: from,
+          username: userData.username,
+        }),
+      });
+    };
+
     socket.on("receivePrivateFriendRequest", onFr);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("receivePrivateMessage", onReceiveMessage);
+    socket.on("receiveDeleteSeenMessage", deleteUnSeenMessages);
 
     socket.emit("register", userData.username);
 
@@ -186,11 +149,19 @@ export const ChatProvider = ({ children }) => {
       socket.off("disconnect", onDisconnect);
       socket.off("receivePrivateMessage", onReceiveMessage);
       socket.off("receivePrivateFriendRequest", onFr);
+      socket.off("receiveDeleteSeenMessage", deleteUnSeenMessages);
     };
   }, [userData]);
 
   const sendPrivateMessage = async (message) => {
-    const currentRoom = await db.get("rooms", currentRoomId);
+    let currentRoom = await db.get("rooms", activeFriend.roomId);
+
+    if (!currentRoom) {
+      currentRoom = await db.add("rooms", {
+        id: activeFriend.roomId,
+        messages: [],
+      });
+    }
 
     let newRoom = currentRoom;
 
@@ -199,13 +170,14 @@ export const ChatProvider = ({ children }) => {
 
     newRoom.messages = [...oldMessages, newMessages];
 
-    console.log(newRoom)
+    console.log(newRoom);
 
     await db.put("rooms", newRoom);
 
     socket.emit("privateMessage", {
-      to: activeFriend.friendUsername,
-      roomId: currentRoomId,
+      from: userData.username,
+      to: activeFriend.username,
+      roomId: activeFriend.roomId,
       message,
     });
   };
@@ -216,6 +188,13 @@ export const ChatProvider = ({ children }) => {
     });
   };
 
+  const deleteSeenMessage = async ({ friendname, username }) => {
+    socket.emit("deleteSeenMessage", {
+      to: friendname,
+      from: username,
+    });
+  };
+
   return (
     <ChatContext.Provider
       value={{
@@ -223,10 +202,10 @@ export const ChatProvider = ({ children }) => {
         setActiveFriend,
         messages,
         setMessages,
-        currentRoomId,
         sendPrivateMessage,
         isloadingMessages,
         sendFriendRequstThroughSocket,
+        deleteSeenMessage,
         db,
       }}
     >

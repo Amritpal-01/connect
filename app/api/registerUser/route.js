@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import UserData from "@/app/models/userData";
 
-
 export async function POST(request) {
   // accuired data
   let profile = await request.json();
@@ -20,30 +19,28 @@ export async function POST(request) {
     if (!currentUser) {
       const createUserData = new UserData({
         uid: profile.uid,
-        displayName: profile.displayName,
-        bio: profile.bio,
-        dob: profile.dob,
         username: profile.username,
-        email: profile.email,
-        photoURL: profile.photoURL,
+        profile: {
+          displayName: profile.displayName,
+          bio: profile.bio,
+          dob: profile.dob,
+          email: profile.email,
+          photoURL: profile.photoURL,
+        },
         friendRequests: [],
         friends: [],
       });
 
-
       await createUserData.save();
 
       return NextResponse.json({ Message: "new user created", status: 200 });
-
     } else {
-
-      return NextResponse.json({ Message: "username already exists", status: 409 });
-
+      return NextResponse.json({
+        Message: "username already exists",
+        status: 409,
+      });
     }
-
   } catch {
-
     return NextResponse.json({ Message: "internal server error", status: 500 });
-
   }
 }

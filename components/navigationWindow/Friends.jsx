@@ -1,31 +1,43 @@
-import React, { useEffect, useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext';
-import { useChat } from '@/contexts/ChatContext';
-import Image from 'next/image';
+/** @format */
 
-const Friends = ({setActivePanelMain}) => {
-  const {setActiveFriend} = useChat()
+import React, { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useChat } from "@/contexts/ChatContext";
+import Image from "next/image";
+
+const Friends = ({ setActivePanelMain }) => {
+  const { setActiveFriend } = useChat();
   const { currentUser, userData, isLoadingSession } = useAuth();
-  const [userFriends, setUserFriends] = useState([])
-  const [searchQuery, setSearchQuery] = useState('')
+  const [userFriends, setUserFriends] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if(userData){
-      setUserFriends(userData.friends)
+    if (userData) {
+      setUserFriends(userData.friends);
     }
-  },[userData])
+  }, [userData]);
 
-  const filteredFriends = userFriends.filter(friend => 
-    friend.friendDisplayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    friend.friendBio.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredFriends = userFriends.filter(
+    (friend) =>
+      friend.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      friend.bio.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const deleteUnSeenMessages = async (friendName) => {
+    let response = await fetch("/api/deleteMessages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        friendname: friendName,
+        username: userData.username,
+      }),
+    });
+  };
 
   return (
     <div className="">
       <main className="friends h-full flex flex-col items-center px-4">
-        <h2 className="">
-          Friends
-        </h2>
+        <h2 className="">Friends</h2>
         <div className="search flex items-center relative mb-5 w-full max-w-md">
           <input
             className="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-800/50 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -55,15 +67,19 @@ const Friends = ({setActivePanelMain}) => {
         <div className="w-full flex flex-col items-center pb-40 overflow-auto overflow-x-hidden scrollbar-thin-custom">
           {filteredFriends.length === 0 ? (
             <div className="text-gray-400 text-center py-8">
-              {searchQuery ? 'No friends found matching your search' : 'No friends yet'}
+              {searchQuery
+                ? "No friends found matching your search"
+                : "No friends yet"}
             </div>
           ) : (
             filteredFriends.map((friend) => (
               <div
-                key={friend.friendUid}
-                onClick={() => {
-                  setActivePanelMain("room")
-                  setActiveFriend(friend)
+                key={friend.uid}
+                onClick={async () => {
+                  friend.unSeenMessages = [];
+                  deleteUnSeenMessages(friend.username);
+                  setActivePanelMain("room");
+                  setActiveFriend(friend);
                 }}
                 className="friend w-full max-w-md px-4 py-3 flex items-center gap-3 relative hover:bg-gray-800/50 rounded-xl transition-all duration-300 cursor-pointer group"
               >
@@ -71,23 +87,35 @@ const Friends = ({setActivePanelMain}) => {
                   <Image
                     fill
                     alt="profilePic"
-                    src={friend.friendPhotoURL || "/noProfile.jpg"}
+                    src={friend.photoURL || "/noProfile.jpg"}
                     className="object-cover"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-white font-semibold truncate">
-                    {friend.friendDisplayName}
+                    {friend.displayName}
                   </h1>
                   <h3 className="text-gray-400 text-sm truncate">
-                    {friend.friendBio}
+                    {friend.bio}
                   </h3>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <h3 className="text-gray-400 text-xs">8:34 AM</h3>
-                  <div className="aspect-square w-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-medium shadow-lg shadow-blue-500/25">
-                    1
-                  </div>
+                  <h3 className="text-gray-400 text-xs">
+                    {(friend.unSeenMessages.length != 0 ) && new Date(
+                      friend.unSeenMessages[
+                        friend.unSeenMessages.length - 1
+                      ].timestamp
+                    ).toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </h3>
+                  {friend.unSeenMessages.length != 0 && (
+                    <div className="aspect-square w-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-medium shadow-lg shadow-blue-500/25">
+                      {friend.unSeenMessages.length}
+                    </div>
+                  )}
                 </div>
               </div>
             ))
@@ -95,7 +123,7 @@ const Friends = ({setActivePanelMain}) => {
         </div>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default Friends
+export default Friends;

@@ -8,13 +8,15 @@ export async function POST(request) {
   let { uid, displayName, bio } = await request.json();
 
   try {
-    
     await mongoose.connect(`${process.env.MONGODB_URI}connect`);
     console.log("Connecting to DB...");
 
     await UserData.findOneAndUpdate(
       { uid },
-      { displayName, bio },
+      {
+        "profile.displayName": displayName,
+        "profile.bio": bio,
+      }
     );
 
     console.log("User updated");

@@ -13,15 +13,15 @@ const Profile = () => {
 
   useEffect(() => {
     if (userData) {
-      setName(userData.displayName || "");
-      setAbout(userData.bio || "");
+      setName(userData.profile.displayName || "");
+      setAbout(userData.profile.bio || "");
     }
   }, [userData]);
 
   useEffect(() => {
     if (!userData) return;
-    const isNameChanged = name !== (userData.displayName || "");
-    const isAboutChanged = about !== (userData.bio || "");
+    const isNameChanged = name !== (userData.profile.displayName || "");
+    const isAboutChanged = about !== (userData.profile.bio || "");
     setIsEdited(isNameChanged || isAboutChanged);
   }, [name, about, userData]);
 
@@ -55,7 +55,7 @@ const Profile = () => {
     <div className="w-full h-full flex justify-center items-start pt-8">
       <div className="w-full max-w-md flex flex-col items-center px-4">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent mb-6">
-          {userData ? userData.username : "Loading..."}
+          {userData.username}
         </h2>
         
         <div className="relative group">
@@ -63,7 +63,7 @@ const Profile = () => {
             <Image
               fill
               alt="profilePic"
-              src={currentUser.photoURL || "/noProfile.jpg"}
+              src={userData.profile.photoURL || "/noProfile.jpg"}
               className="object-cover"
             />
           </div>

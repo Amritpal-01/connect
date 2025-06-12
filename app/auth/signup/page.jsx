@@ -60,15 +60,15 @@ const page = () => {
     });
 
     async function deleteUser() {
-        try {
-          const user = auth.currentUser;
-          if (user) {
-            await user.delete();
-          } 
-        } catch (error) {
-          console.error("Error deleting user:", error);
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          await user.delete();
         }
+      } catch (error) {
+        console.error("Error deleting user:", error);
       }
+    }
 
     if (!isDateGood) {
       notify("Please fill in all date of birth fields");
@@ -117,13 +117,11 @@ const page = () => {
 
       isUserDataSaved = true;
     } catch (error) {
-
       notify(error.message);
 
       deleteUser();
 
       reset();
-      
     } finally {
       setIsLoading(false);
     }

@@ -5,16 +5,15 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChat } from "@/contexts/ChatContext";
 import EmojiPicker from "emoji-picker-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const {
     activeFriend,
     messages,
     setMessages,
-    currentRoomId,
     sendPrivateMessage,
     isloadingMessages,
+    deleteSeenMessage
   } = useChat();
   const { currentUser, userData } = useAuth();
   const [message, setMessage] = useState("");
@@ -127,7 +126,8 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        roomId: currentRoomId,
+        friendname : activeFriend.username,
+        username : userData.username,
         message: {
           text: newMessage.text,
           sender: newMessage.sender,
@@ -135,6 +135,13 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
         },
       }),
     });
+
+    if(response.ok){
+      deleteSeenMessage({
+        friendname : activeFriend.username,
+        username : userData.username
+      })
+    }
 
     setAttachments([]);
   };
@@ -166,13 +173,13 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
             <Image
               fill
               alt="profilePic"
-              src={activeFriend?.friendPhotoURL || "/noProfile.jpg"}
+              src={activeFriend?.photoURL || "/noProfile.jpg"}
               className="object-cover"
             />
           </div>
           <div className="min-w-0">
             <h1 className="text-white font-medium text-sm truncate">
-              {activeFriend?.friendDisplayName}
+              {activeFriend?.displayName}
             </h1>
             <p className="text-xs text-gray-400">
               {isTyping ? "Typing..." : "Online"}
