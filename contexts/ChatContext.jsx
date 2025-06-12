@@ -38,6 +38,7 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   const getMessages = async () => {
+    console.log("getting messages")
     setIsloadingMessages(true);
     setMessages([]);
 
@@ -59,11 +60,11 @@ export const ChatProvider = ({ children }) => {
 
     let newRoom = currentRoom;
 
-    console.log(newRoom);
 
     const oldMessages = currentRoom.messages;
     const newMessages = activeFriend.unSeenMessages;
-    let isThereAnyNewMessage = !(newMessages.length == 0);
+
+    console.log(newMessages, "<-----------")
 
     newRoom.messages = [...oldMessages, ...newMessages];
 

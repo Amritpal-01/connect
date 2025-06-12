@@ -76,10 +76,10 @@ const Friends = ({ setActivePanelMain }) => {
               <div
                 key={friend.uid}
                 onClick={async () => {
-                  friend.unSeenMessages = [];
                   deleteUnSeenMessages(friend.username);
                   setActivePanelMain("room");
                   setActiveFriend(friend);
+                  friend.unSeenMessages = [];
                 }}
                 className="friend w-full max-w-md px-4 py-3 flex items-center gap-3 relative hover:bg-gray-800/50 rounded-xl transition-all duration-300 cursor-pointer group"
               >
