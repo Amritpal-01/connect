@@ -38,7 +38,7 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   const getMessages = async () => {
-    console.log("getting messages");
+    console.log("getting messages", activeFriend.username);
     setIsloadingMessages(true);
     setMessages([]);
 
@@ -130,6 +130,8 @@ export const ChatProvider = ({ children }) => {
       setMessages((prevMessages) => [...prevMessages, message]);
 
 
+      if(message.sender == activeFriend.username) return;
+      
       userData.friends.map((friend) => {
         if (message.sender === friend.username) {
           friend.lastMessage = message;
@@ -137,6 +139,7 @@ export const ChatProvider = ({ children }) => {
           friend.unSeenMessages = [...oldUnSeenMessages,message]
         }
       });
+
     };
 
     const onFr = () => {
@@ -169,7 +172,7 @@ export const ChatProvider = ({ children }) => {
       socket.off("receivePrivateFriendRequest", onFr);
       socket.off("receiveDeleteSeenMessage", deleteUnSeenMessages);
     };
-  }, [userData]);
+  }, [userData, activeFriend]);
 
   const sendPrivateMessage = async (message) => {
     let currentRoom = await db.get("rooms", activeFriend.roomId);
