@@ -28,8 +28,6 @@ export async function POST(request) {
       "friends.username": body.friendname, // assuming 'body.friendname' holds the username
     });
 
-    
-
     if (a == null) {
       user.friends.push({
         roomId: id,
@@ -38,6 +36,11 @@ export async function POST(request) {
         displayName: friend.profile.displayName,
         photoURL: friend.profile.photoURL,
         unSeenMessages: [],
+        lastMessage: {
+          text: null,
+          sender: null,
+          timestamp: new Date(),
+        },
       });
     }
 
@@ -46,7 +49,6 @@ export async function POST(request) {
         _id: friend._id,
         "friendRequests.username": user.username, // assuming 'body.friendname' holds the username
       });
-
 
       if (b == null) {
         friend.friendRequests.push({

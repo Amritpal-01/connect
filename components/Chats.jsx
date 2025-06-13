@@ -9,11 +9,12 @@ import EmojiPicker from "emoji-picker-react";
 const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const {
     activeFriend,
+    setActiveFriend,
     messages,
     setMessages,
     sendPrivateMessage,
     isloadingMessages,
-    deleteSeenMessage
+    deleteSeenMessage,
   } = useChat();
   const { currentUser, userData } = useAuth();
   const [message, setMessage] = useState("");
@@ -36,14 +37,15 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } =
+      messagesContainerRef.current;
 
     const isNeadBottom = scrollHeight - clientHeight - scrollTop < 200;
-    
-    if(!isNeadBottom){
-      setShowScrollButton(true)
-    }else{
-      setShowScrollButton(false)
+
+    if (!isNeadBottom) {
+      setShowScrollButton(true);
+    } else {
+      setShowScrollButton(false);
     }
 
     setUserScrollHeight(scrollHeight - scrollTop - clientHeight);
@@ -60,8 +62,8 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   // Scroll to bottom when chat is opened
   useEffect(() => {
     if (activePanelMain === "room" && !isloadingMessages) {
-        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-        setShowScrollButton(false);
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      setShowScrollButton(false);
     }
   }, [activePanelMain, isloadingMessages]);
 
@@ -113,7 +115,6 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       text: message,
       sender: userData.username,
       timestamp: new Date(),
-      attachments: attachments,
     };
 
     setMessage("");
@@ -122,12 +123,28 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
 
     await sendPrivateMessage(newMessage);
 
+    let updateLastMessage = await fetch("/api/updateLastMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        friendUid: activeFriend.uid,
+        userUid: userData.uid,
+        message: newMessage,
+      }),
+    });
+
+    userData.friends.map((friend) => {
+      if (activeFriend.uid === friend.uid) {
+        friend.lastMessage = newMessage;
+      }
+    });
+
     let response = await fetch("/api/sendMessage", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        friendname : activeFriend.username,
-        username : userData.username,
+        friendname: activeFriend.username,
+        username: userData.username,
         message: {
           text: newMessage.text,
           sender: newMessage.sender,
@@ -136,11 +153,11 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       }),
     });
 
-    if(response.ok){
+    if (response.ok) {
       deleteSeenMessage({
-        friendname : activeFriend.username,
-        username : userData.username
-      })
+        friendname: activeFriend.username,
+        username: userData.username,
+      });
     }
 
     setAttachments([]);
@@ -153,8 +170,12 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
         ref={header}
         className="flex z-10 w-full items-center justify-between border-b border-gray-700/50 bg-gray-800/30 backdrop-blur-sm"
       >
-        <button 
-          onClick={() => setActivePanelMain("chats")}
+        <button
+          onClick={() => {
+            setActivePanelMain("chats");
+            
+            setActiveFriend(null);
+          }}
           className="hidden max-[800px]:flex mx-2 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm"
         >
           <svg
@@ -276,34 +297,34 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
                 )}
               </div>
             ))}
-            </div>
+          </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
       {/* Scroll to Bottom Button */}
-        {showScrollButton && (
-          <button
-            onClick={scrollToBottom}
-            className="absolute bottom-24 right-6 p-3 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-500 transition-all duration-300 z-10"
+      {showScrollButton && (
+        <button
+          onClick={scrollToBottom}
+          className="absolute bottom-24 right-6 p-3 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-500 transition-all duration-300 z-10"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-          </button>
-        )}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 14l-7 7m0 0l-7-7m7 7V3"
+            />
+          </svg>
+        </button>
+      )}
 
       {/* Message Input */}
       <form

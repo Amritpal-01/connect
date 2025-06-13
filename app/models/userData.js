@@ -3,10 +3,10 @@
 import mongoose, { model, Schema } from "mongoose";
 
 const messageSchema = new Schema({
-    text : String,
-    sender : String,
-    timestamp : Date
-})
+  text: String,
+  sender: String,
+  timestamp: Date,
+});
 
 const requestSchema = new Schema({
   uid: String,
@@ -16,12 +16,17 @@ const requestSchema = new Schema({
 });
 
 const friendSchema = new Schema({
-  roomId : String,
-  uid : String,
+  roomId: String,
+  uid: String,
   displayName: String,
   username: String,
   photoURL: String,
-  unSeenMessages : [messageSchema]
+  unSeenMessages: [messageSchema],
+  lastMessage: {
+    text: String,
+    sender: String,
+    timestamp: Date,
+  },
 });
 
 const UserDataSchema = new Schema({

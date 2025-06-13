@@ -76,10 +76,8 @@ const Friends = ({ setActivePanelMain }) => {
               <div
                 key={friend.uid}
                 onClick={async () => {
-                  deleteUnSeenMessages(friend.username);
                   setActivePanelMain("room");
                   setActiveFriend(friend);
-                  // friend.unSeenMessages = [];
                 }}
                 className="friend w-full max-w-md px-4 py-3 flex items-center gap-3 relative hover:bg-gray-800/50 rounded-xl transition-all duration-300 cursor-pointer group"
               >
@@ -96,20 +94,20 @@ const Friends = ({ setActivePanelMain }) => {
                     {friend.displayName}
                   </h1>
                   <h3 className="text-gray-400 text-sm truncate">
-                    {friend.bio}
+                    {friend.lastMessage.text}
                   </h3>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <h3 className="text-gray-400 text-xs">
-                    {(friend.unSeenMessages.length != 0 ) && new Date(
-                      friend.unSeenMessages[
-                        friend.unSeenMessages.length - 1
-                      ].timestamp
-                    ).toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                    {friend.lastMessage &&
+                      new Date(friend.lastMessage.timestamp).toLocaleTimeString(
+                        "en-US",
+                        {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        }
+                      )}
                   </h3>
                   {friend.unSeenMessages.length != 0 && (
                     <div className="aspect-square w-6 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center font-medium shadow-lg shadow-blue-500/25">
