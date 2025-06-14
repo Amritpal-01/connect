@@ -38,7 +38,6 @@ export const ChatProvider = ({ children }) => {
   }, []);
 
   const getMessages = async () => {
-    console.log("getting messages", activeFriend.username);
     setIsloadingMessages(true);
     setMessages([]);
 
@@ -63,8 +62,6 @@ export const ChatProvider = ({ children }) => {
     const oldMessages = currentRoom.messages;
     const newMessages = activeFriend.unSeenMessages;
 
-    console.log(newMessages);
-
     newRoom.messages = [...oldMessages, ...newMessages];
 
     await db.put("rooms", newRoom);
@@ -72,14 +69,22 @@ export const ChatProvider = ({ children }) => {
     setMessages(newRoom.messages);
     setIsloadingMessages(false);
 
-    userData.friends.map((friend) => {
+    userData.friends.map(async (friend) => {
       if (friend == activeFriend) {
         friend.unSeenMessages = [];
+
+        let response = await fetch("/api/deleteMessages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            friendname: activeFriend.username,
+            username: userData.username,
+          }),
+        });
+
         deleteSeenMessage(friend.username);
       }
     });
-
-
   };
 
   useEffect(() => {
@@ -129,17 +134,15 @@ export const ChatProvider = ({ children }) => {
 
       setMessages((prevMessages) => [...prevMessages, message]);
 
+      if (message.sender == activeFriend.username) return;
 
-      if(message.sender == activeFriend.username) return;
-      
       userData.friends.map((friend) => {
         if (message.sender === friend.username) {
           friend.lastMessage = message;
           const oldUnSeenMessages = friend.unSeenMessages;
-          friend.unSeenMessages = [...oldUnSeenMessages,message]
+          friend.unSeenMessages = [...oldUnSeenMessages, message];
         }
       });
-
     };
 
     const onFr = () => {
