@@ -111,30 +111,34 @@ export const ChatProvider = ({ children }) => {
     };
 
     const onReceiveMessage = async ({ message, roomId, forWhome }) => {
-      let currentRoom;
-      try {
-        currentRoom = await db.get("rooms", roomId);
-        if (!currentRoom) throw new Error("room not found");
-      } catch {
-        await db.add("rooms", {
-          id: room,
-          messages: [],
-        });
-        currentRoom = await db.get("rooms", roomId); // 🟢 Re-fetch after adding
+      console.log("message");
+
+      if (activeFriend?.username == message.sender) {
+        let currentRoom;
+        try {
+          currentRoom = await db.get("rooms", roomId);
+          if (!currentRoom) throw new Error("room not found");
+        } catch {
+          await db.add("rooms", {
+            id: room,
+            messages: [],
+          });
+          currentRoom = await db.get("rooms", roomId); // 🟢 Re-fetch after adding
+        }
+
+        let newRoom = currentRoom;
+
+        const oldMessages = currentRoom.messages;
+        const newMessages = message;
+
+        newRoom.messages = [...oldMessages, newMessages];
+
+        await db.put("rooms", newRoom);
       }
-
-      let newRoom = currentRoom;
-
-      const oldMessages = currentRoom.messages;
-      const newMessages = message;
-
-      newRoom.messages = [...oldMessages, newMessages];
-
-      await db.put("rooms", newRoom);
 
       setMessages((prevMessages) => [...prevMessages, message]);
 
-      if (message.sender == activeFriend.username) return;
+      if (message.sender == activeFriend?.username) return;
 
       userData.friends.map((friend) => {
         if (message.sender === friend.username) {
@@ -150,14 +154,16 @@ export const ChatProvider = ({ children }) => {
     };
 
     const deleteUnSeenMessages = async ({ from }) => {
-      let response = await fetch("/api/deleteMessages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          friendname: from,
-          username: userData.username,
-        }),
-      });
+      if (activeFriend?.username == from) {
+        let response = await fetch("/api/deleteMessages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            friendname: from,
+            username: userData.username,
+          }),
+        });
+      }
     };
 
     socket.on("receivePrivateFriendRequest", onFr);
