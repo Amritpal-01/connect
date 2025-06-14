@@ -15,21 +15,6 @@ export default function Home() {
   const { currentUser, userData, isLoadingSession } = useAuth();
   const [isChatsToggle, setIsChatsToggle] = useState(true);
   const [activePanelMain, setActivePanelMain] = useState("chats");
-  const [viewPortHeight, setViewPortHeight] = useState(0); // initialize safely
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.visualViewport) {
-      setViewPortHeight(window.visualViewport.height.toFixed(2));
-    }
-  }, []);
-
-
-  useEffect(() => {
-    window.visualViewport.addEventListener("resize", () => {
-      let num = window.visualViewport.height.toFixed(2);
-      setViewPortHeight(num);
-    });
-  }, []);
 
   useEffect(() => {
     if (!isLoadingSession && !currentUser) {
@@ -51,7 +36,6 @@ export default function Home() {
     <div
     ref={appView}
       className={`w-full max-h-[100dvh] flex flex-row`}
-      style={{height:`${(activePanelMain === "room")?(viewPortHeight + "px"):""}`}}
     >
       <div
         className={`flex flex-col transition-all duration-300 w-96 overflow-hidden ${

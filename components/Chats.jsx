@@ -383,12 +383,6 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
             <textarea
               value={message}
               onFocus={() => {
-                setTimeout(async () => {
-                  await header.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                }, 300);
               }}
               onChange={(e) => {
                 setMessage(e.target.value);
