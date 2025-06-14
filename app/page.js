@@ -10,8 +10,8 @@ import { redirect } from "next/navigation";
 import { useChat } from "@/contexts/ChatContext";
 
 export default function Home() {
-  const { fuck } = useChat();
-  const appView = useRef()
+  const { isSocketConnected } = useChat();
+  const appView = useRef();
   const { currentUser, userData, isLoadingSession } = useAuth();
   const [isChatsToggle, setIsChatsToggle] = useState(true);
   const [activePanelMain, setActivePanelMain] = useState("chats");
@@ -25,18 +25,41 @@ export default function Home() {
   if (isLoadingSession || !userData || !currentUser)
     return (
       <div className="w-full h-[100dvh] flex items-center justify-center ">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-400 font-medium">Loading...</p>
+        <div className=" mx-auto mt-6">
+          <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 shadow-sm flex flex-col items-center justify-center">
+            <div className="flex space-x-1 mr-3">
+              <span className="dot bg-blue-500"></span>
+              <span className="dot bg-blue-500"></span>
+              <span className="dot bg-blue-500"></span>
+            </div>
+            <span className="text-gray-700 dark:text-gray-200 font-medium text-sm">
+              Loading messages
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+
+  if (!isSocketConnected)
+    return (
+      <div className="w-full h-[100dvh] flex items-center justify-center ">
+        <div className=" mx-auto mt-6">
+          <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 shadow-sm flex flex-col items-center justify-center">
+            <div className="flex space-x-1 mr-3">
+              <span className="dot bg-blue-500"></span>
+              <span className="dot bg-blue-500"></span>
+              <span className="dot bg-blue-500"></span>
+            </div>
+            <span className="text-gray-700 dark:text-gray-200 font-medium text-sm">
+              Wait for connection
+            </span>
+          </div>
         </div>
       </div>
     );
 
   return (
-    <div
-    ref={appView}
-      className={`w-full max-h-[100dvh] flex flex-row`}
-    >
+    <div ref={appView} className={`w-full max-h-[100dvh] flex flex-row`}>
       <div
         className={`flex flex-col transition-all duration-300 w-96 overflow-hidden ${
           activePanelMain === "chats"

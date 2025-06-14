@@ -14,6 +14,7 @@ export const ChatProvider = ({ children }) => {
   const [activeFriend, setActiveFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isloadingMessages, setIsloadingMessages] = useState(null);
+  const [isSoketConnected,setIsSocketConnected] = useState(false)
   const [db, setDb] = useState(null);
 
   const [isConnected, setIsConnected] = useState(false);
@@ -97,12 +98,19 @@ export const ChatProvider = ({ children }) => {
     if (!userData) return;
 
     const onConnect = () => {
+      console.log("connected")
       setIsConnected(true);
       setTransport(socket.io.engine.transport.name);
+      setIsSocketConnected(true)
 
       socket.io.engine.on("upgrade", (transport) => {
         setTransport(transport.name);
       });
+    };
+
+    const handleConnectError = (error) => {
+      console.log("not Connected")
+      setIsSocketConnected(false)
     };
 
     const onDisconnect = () => {
@@ -171,6 +179,7 @@ export const ChatProvider = ({ children }) => {
     socket.on("disconnect", onDisconnect);
     socket.on("receivePrivateMessage", onReceiveMessage);
     socket.on("receiveDeleteSeenMessage", deleteUnSeenMessages);
+    socket.on("connect_error", handleConnectError);
 
     socket.emit("register", userData.username);
 
@@ -180,6 +189,7 @@ export const ChatProvider = ({ children }) => {
       socket.off("receivePrivateMessage", onReceiveMessage);
       socket.off("receivePrivateFriendRequest", onFr);
       socket.off("receiveDeleteSeenMessage", deleteUnSeenMessages);
+      socket.off("connect_error", handleConnectError);
     };
   }, [userData, activeFriend]);
 
@@ -235,6 +245,7 @@ export const ChatProvider = ({ children }) => {
         sendFriendRequstThroughSocket,
         deleteSeenMessage,
         db,
+        isSoketConnected
       }}
     >
       {children}
