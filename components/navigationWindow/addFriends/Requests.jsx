@@ -16,7 +16,7 @@ const Requests = () => {
 
   useEffect(() => {
     if (userData) setFriendRequests(userData.friendRequests);
-    console.log(userData.friendRequests)
+    console.log(userData.friendRequests);
   }, [userData]);
 
   const acceptFriendRequest = async (username) => {
@@ -40,7 +40,7 @@ const Requests = () => {
 
       const room = roomData.id;
 
-      console.log(roomData)
+      console.log(roomData);
 
       const currentRoom = await db.get("rooms", room);
 
@@ -79,18 +79,20 @@ const Requests = () => {
 
       const roomData = await response.json();
 
-      console.log(roomData)
+      console.log(roomData);
 
-      // const room = roomData.id
+      if (roomData.status === 200) {
+        const room = roomData.id;
 
-      // const currentRoom = await db.get("rooms", room);
+        const currentRoom = await db.get("rooms", room);
 
-      // if (!currentRoom) {
-      //   await db.add("rooms", {
-      //     id: room,
-      //     messages: [],
-      //   });
-      // }
+        if (!currentRoom) {
+          await db.add("rooms", {
+            id: room,
+            messages: [],
+          });
+        }
+      }
 
       sendFriendRequstThroughSocket(friendname);
       setFriendname("");
@@ -104,26 +106,24 @@ const Requests = () => {
     fetchUserData();
   };
 
+  const deleteFriendRequest = async (name) => {
+    const response = await fetch("/api/sendFriendRequest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: userData.username,
+        friendname : name,
+        typeRemove: true,
+      }),
+    });
+
+    console.log(await response.json())
+
+    fetchUserData()
+  };
+
   return (
     <div className="w-full h-full flex justify-center relative">
-      {addByUsernameToggle && (
-        <button
-          onClick={() => setAddByUsernameToggle(false)}
-          className="absolute -bottom-15 z-20 p-2 flex flex-row gap-[2px] items-center rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm"
-        >
-          <svg
-            className="text-gray-400 group-hover:text-blue-500 rotate-180 transition-colors duration-300"
-            width="20px"
-            height="20px"
-            viewBox="0 0 42 42"
-            fill="currentColor"
-          >
-            <polygon points="13.933,1 34,21.068 14.431,40.637 9.498,35.704 24.136,21.068 9,5.933" />
-          </svg>
-          <h3 className="text-gray-400 pr-2 font-bold">Back</h3>
-        </button>
-      )}
-
       <div
         className={`w-full max-w-md transition-all duration-500 ease-in-out transform ${
           addByUsernameToggle
@@ -154,9 +154,9 @@ const Requests = () => {
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-lg font-medium text-gray-200">
+            <h1 className="text-lg font-medium text-white/50">
               Friend Requests
-            </h2>
+            </h1>
             {friendRequests.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
                 No pending friend requests
@@ -167,32 +167,43 @@ const Requests = () => {
                   key={request.uid}
                   className="w-full bg-gray-800/50 rounded-xl p-4 space-y-4"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="aspect-square w-12 relative overflow-hidden rounded-full ring-2 ring-gray-700">
-                      <Image
-                        fill
-                        alt="profilePic"
-                        src={request.photoURL || "/noProfile.jpg"}
-                        className="object-cover"
-                      />
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-row gap-3">
+                      <div className="aspect-square w-12 relative overflow-hidden rounded-full ring-2 ring-gray-700">
+                        <Image
+                          fill
+                          alt="profilePic"
+                          src={request.photoURL || "/noProfile.jpg"}
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h1 className="text-white font-medium">
+                          {request.displayName}
+                        </h1>
+                        <p className="text-sm text-gray-400">
+                          @{request.username}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h1 className="text-white font-medium">
-                        {request.displayName}
-                      </h1>
-                      <p className="text-sm text-gray-400">
-                        @{request.username}
-                      </p>
+
+                    <div className="flex w-full justify-between">
+                      <button
+                        onClick={() => {
+                          deleteFriendRequest(request.username);
+                        }}
+                        className="mx-3 text-red-500 cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => acceptFriendRequest(request.username)}
+                        disabled={isLoading}
+                        className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Accept
+                      </button>
                     </div>
-                    <button
-                      onClick={() =>
-                        acceptFriendRequest(request.username)
-                      }
-                      disabled={isLoading}
-                      className="px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Accept
-                    </button>
                   </div>
                 </div>
               ))
@@ -209,7 +220,7 @@ const Requests = () => {
         }`}
       >
         <div className="space-y-6">
-          <h2 className="text-lg font-medium text-gray-200">Add by Username</h2>
+          <h1 className="text-lg font-bold text-gray-200">Add by Username</h1>
           <div className="space-y-4">
             <div className="relative">
               <input
@@ -256,6 +267,23 @@ const Requests = () => {
                 <span>Send Friend Request</span>
               )}
             </button>
+            {addByUsernameToggle && (
+              <button
+                onClick={() => setAddByUsernameToggle(false)}
+                className="p-2 mx-auto flex flex-row gap-[2px] items-center rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                <svg
+                  className="text-gray-400 group-hover:text-blue-500 rotate-180 transition-colors duration-300"
+                  width="20px"
+                  height="20px"
+                  viewBox="0 0 42 42"
+                  fill="currentColor"
+                >
+                  <polygon points="13.933,1 34,21.068 14.431,40.637 9.498,35.704 24.136,21.068 9,5.933" />
+                </svg>
+                <h3 className="text-gray-400 pr-2 font-bold">Back</h3>
+              </button>
+            )}
           </div>
         </div>
       </div>

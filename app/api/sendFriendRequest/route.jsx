@@ -11,6 +11,26 @@ export async function POST(request) {
     await mongoose.connect(`${process.env.MONGODB_URI}connect`);
 
     let user = await UserData.findOne({ username: body.username });
+
+    if(body.typeRemove){
+
+      const result = await UserData.updateOne(
+        { _id: user._id },
+        {
+          $pull: {
+            friendRequests: { username: body.friendname }, // make sure this value is correct
+          },
+        }
+      );
+
+    await user.save();
+
+    return NextResponse.json({ status: 200 });
+
+    }
+
+    if(!body.friendname) return NextResponse.json({ status: 500 });
+
     let friend = await UserData.findOne({ username: body.friendname });
 
     if (!user) {
@@ -44,7 +64,7 @@ export async function POST(request) {
       });
     }
 
-    if (!body.typeAccept) {
+    if (!body.typeAccept && !body.typeRemove) {
       const b = await UserData.findOne({
         _id: friend._id,
         "friendRequests.username": user.username, // assuming 'body.friendname' holds the username

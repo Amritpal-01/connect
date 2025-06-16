@@ -19,8 +19,7 @@ const Friends = ({ setActivePanelMain }) => {
 
   const filteredFriends = userFriends.filter(
     (friend) =>
-      friend.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      friend.bio.toLowerCase().includes(searchQuery.toLowerCase())
+      friend.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const deleteUnSeenMessages = async (friendName) => {

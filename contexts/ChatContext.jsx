@@ -20,6 +20,22 @@ export const ChatProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
 
+  const updateFriendProfile = async () => {
+    let response = await fetch("/api/updateFriendData", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        friendUid: activeFriend.uid,
+        userUid: userData.uid,
+      }),
+    });
+  };
+
+  useEffect(() => {
+    if (!activeFriend) return;
+    updateFriendProfile();
+  }, [activeFriend]);
+
   useEffect(() => {
     async function initDB() {
       // indexedDB.deleteDatabase("ChatDB");
@@ -101,8 +117,8 @@ export const ChatProvider = ({ children }) => {
       console.log("connected");
       setIsConnected(true);
       setTransport(socket.io.engine.transport.name);
-      if(!isSocketConnected){
-        setIsSocketConnected(true)
+      if (!isSocketConnected) {
+        setIsSocketConnected(true);
       }
 
       socket.io.engine.on("upgrade", (transport) => {
@@ -112,8 +128,8 @@ export const ChatProvider = ({ children }) => {
 
     const handleConnectError = (error) => {
       console.log("not Connected");
-      if(isSocketConnected){
-        setIsSocketConnected(false)
+      if (isSocketConnected) {
+        setIsSocketConnected(false);
       }
     };
 

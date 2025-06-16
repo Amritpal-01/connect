@@ -1,10 +1,13 @@
 /** @format */
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChat } from "@/contexts/ChatContext";
 import EmojiPicker from "emoji-picker-react";
+
+const MESSAGE_HEIGHT = 60; // Approximate height of each message
+const BUFFER_SIZE = 5; // Number of messages to render above and below viewport
 
 const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const {
@@ -23,33 +26,124 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const [attachments, setAttachments] = useState([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [userScrollHeight, setUserScrollHeight] = useState(0);
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const header = useRef();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    setShowScrollButton(false);
-  };
-
-  const handleScroll = () => {
+  // Calculate visible messages based on scroll position
+  const calculateVisibleRange = useCallback(() => {
     if (!messagesContainerRef.current) return;
 
-    const { scrollTop, scrollHeight, clientHeight } =
-      messagesContainerRef.current;
+    const container = messagesContainerRef.current;
+    const scrollTop = container.scrollTop;
+    const containerHeight = container.clientHeight;
 
-    const isNeadBottom = scrollHeight - clientHeight - scrollTop < 200;
+    const startIndex = Math.max(0, Math.floor(scrollTop / MESSAGE_HEIGHT) - BUFFER_SIZE);
+    const endIndex = Math.min(
+      messages.length,
+      Math.ceil((scrollTop + containerHeight) / MESSAGE_HEIGHT) + BUFFER_SIZE
+    );
 
-    if (!isNeadBottom) {
+    setVisibleRange({ start: startIndex, end: endIndex });
+  }, [messages.length]);
+
+  // Memoize the message rendering function
+  const renderMessage = useCallback((msg, i) => {
+    const isSameSender = msg.sender === messages[i - 1]?.sender;
+    const isCurrentUser = msg.sender === userData.username;
+
+    return (
+      <div
+        key={i}
+        className={`flex messagesIn p-1 ${
+          isCurrentUser ? "justify-end" : "justify-start"
+        }`}
+        style={{ height: MESSAGE_HEIGHT }}
+      >
+        {(!isCurrentUser && !isSameSender) && (
+          <div className="flex-shrink-0 mr-1 self-end">
+            <div className="w-6 h-6 rounded-full overflow-hidden">
+              <Image
+                src={activeFriend?.photoURL || "/noProfile.jpg"}
+                alt="profile"
+                width={24}
+                height={24}
+                className="object-cover"
+              />
+            </div>
+          </div>
+        )}
+        {isSameSender && <div className="px-4"></div>}
+        <div
+          className={`max-w-[85%] rounded-2xl px-3 py-1.5 ${
+            isCurrentUser
+              ? "bg-blue-500 text-white"
+              : "bg-gray-700 text-gray-100"
+          }`}
+        >
+          <p className="text-sm whitespace-pre-wrap break-words">
+            {msg.text}
+          </p>
+          <p
+            className={`text-[10px] mt-0.5 ${
+              isCurrentUser ? "text-blue-100" : "text-gray-400"
+            }`}
+          >
+            {new Date(msg.timestamp).toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            })}
+          </p>
+        </div>
+        {(isCurrentUser && !isSameSender) && (
+          <div className="flex-shrink-0 ml-1 self-end">
+            <div className="w-6 h-6 rounded-full overflow-hidden">
+              <Image
+                src={userData.photoURL || "/noProfile.jpg"}
+                alt="profile"
+                width={24}
+                height={24}
+                className="object-cover"
+              />
+            </div>
+          </div>
+        )}
+        {isSameSender && <div className="px-4"></div>}
+      </div>
+    );
+  }, [messages, userData, activeFriend]);
+
+  // Memoize the visible messages list
+  const visibleMessagesList = useMemo(() => {
+    return messages
+      .slice(visibleRange.start, visibleRange.end)
+      .map((msg, i) => renderMessage(msg, visibleRange.start + i));
+  }, [messages, visibleRange, renderMessage]);
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setShowScrollButton(false);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const isNearBottom = scrollHeight - clientHeight - scrollTop < 200;
+
+    if (!isNearBottom) {
       setShowScrollButton(true);
     } else {
       setShowScrollButton(false);
     }
 
+    calculateVisibleRange();
     setUserScrollHeight(scrollHeight - scrollTop - clientHeight);
-  };
+  }, [calculateVisibleRange]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -57,15 +151,15 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       container.addEventListener("scroll", handleScroll);
       return () => container.removeEventListener("scroll", handleScroll);
     }
-  }, []);
+  }, [handleScroll]);
 
-  // Scroll to bottom when chat is opened
   useEffect(() => {
     if (activePanelMain === "room" && !isloadingMessages) {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
       setShowScrollButton(false);
+      calculateVisibleRange();
     }
-  }, [activePanelMain, isloadingMessages]);
+  }, [activePanelMain, isloadingMessages, calculateVisibleRange]);
 
   const smartScroll = () => {
     if (messages.length > 0) {
@@ -213,93 +307,17 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1  overflow-y-auto space-y-2 p-2 scrollbar-thin-custom relative"
+        className="flex-1 overflow-y-auto space-y-2 p-2 scrollbar-thin-custom relative"
       >
         {isloadingMessages ? (
-          <div className="w-full flex items-center justify-center "></div>
+          <div className="w-full flex items-center justify-center"></div>
         ) : (
-          <div>
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex messagesIn p-2 fadeIn ${
-                  msg.sender === userData.username
-                    ? "justify-end"
-                    : "justify-start"
-                }`}
-              >
-                {msg.sender !== userData.username && (
-                  <div className="flex-shrink-0 mr-1 self-end">
-                    <div className="w-6 h-6 rounded-full overflow-hidden">
-                      <Image
-                        src={activeFriend?.friendPhotoURL || "/noProfile.jpg"}
-                        alt="profile"
-                        width={24}
-                        height={24}
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div
-                  className={`max-w-[85%] rounded-2xl px-3 py-1.5 ${
-                    msg.sender === userData.username
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-700 text-gray-100"
-                  }`}
-                >
-                  {msg.attachments?.length > 0 && (
-                    <div className="grid grid-cols-2 gap-1 mb-1">
-                      {msg.attachments.map((file, index) => (
-                        <div
-                          key={index}
-                          className="relative aspect-square rounded-lg overflow-hidden"
-                        >
-                          <Image
-                            src={URL.createObjectURL(file)}
-                            alt={`Attachment ${index + 1}`}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-sm whitespace-pre-wrap break-words">
-                    {msg.text}
-                  </p>
-                  <p
-                    className={`text-[10px] mt-0.5 ${
-                      msg.sender === userData.username
-                        ? "text-blue-100"
-                        : "text-gray-400"
-                    }`}
-                  >
-                    {new Date(msg.timestamp).toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
-                  </p>
-                </div>
-                {msg.sender === userData.username && (
-                  <div className="flex-shrink-0 ml-1 self-end">
-                    <div className="w-6 h-6 rounded-full overflow-hidden">
-                      <Image
-                        src={userData.photoURL || "/noProfile.jpg"}
-                        alt="profile"
-                        width={24}
-                        height={24}
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+          <div style={{ height: messages.length * MESSAGE_HEIGHT }}>
+            <div style={{ transform: `translateY(${visibleRange.start * MESSAGE_HEIGHT}px)` }}>
+              {visibleMessagesList}
+            </div>
           </div>
         )}
-
         <div ref={messagesEndRef} />
       </div>
 

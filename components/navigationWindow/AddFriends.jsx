@@ -8,7 +8,7 @@ const AddFriends = () => {
 
   return (
     <div className="flex flex-col items-center pt-8 px-4">
-      <h2 className=" mb-6">
+      <h2 className="-mt-5">
         Add Friends
       </h2>
 
@@ -57,7 +57,7 @@ const AddFriends = () => {
               <div className="relative">
                 <input
                   type="search"
-                  placeholder="Search by username or email..."
+                  placeholder="Search by username"
                   className="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-800/50 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                 />
                 <svg
