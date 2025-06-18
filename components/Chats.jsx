@@ -1,10 +1,17 @@
 /** @format */
 
-import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChat } from "@/contexts/ChatContext";
 import EmojiPicker from "emoji-picker-react";
+import { redirect } from "next/navigation";
 
 const MESSAGE_HEIGHT = 60; // Approximate height of each message
 const BUFFER_SIZE = 5; // Number of messages to render above and below viewport
@@ -18,6 +25,9 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
     sendPrivateMessage,
     isloadingMessages,
     deleteSeenMessage,
+    activeCall,
+    setActiveCall,
+    call
   } = useChat();
   const { currentUser, userData } = useAuth();
   const [message, setMessage] = useState("");
@@ -41,7 +51,10 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
     const scrollTop = container.scrollTop;
     const containerHeight = container.clientHeight;
 
-    const startIndex = Math.max(0, Math.floor(scrollTop / MESSAGE_HEIGHT) - BUFFER_SIZE);
+    const startIndex = Math.max(
+      0,
+      Math.floor(scrollTop / MESSAGE_HEIGHT) - BUFFER_SIZE
+    );
     const endIndex = Math.min(
       messages.length,
       Math.ceil((scrollTop + containerHeight) / MESSAGE_HEIGHT) + BUFFER_SIZE
@@ -51,71 +64,74 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   }, [messages.length]);
 
   // Memoize the message rendering function
-  const renderMessage = useCallback((msg, i) => {
-    const isSameSender = msg.sender === messages[i - 1]?.sender;
-    const isCurrentUser = msg.sender === userData.username;
+  const renderMessage = useCallback(
+    (msg, i) => {
+      const isSameSender = msg.sender === messages[i - 1]?.sender;
+      const isCurrentUser = msg.sender === userData.username;
 
-    return (
-      <div
-        key={i}
-        className={`flex messagesIn p-1 ${
-          isCurrentUser ? "justify-end" : "justify-start"
-        }`}
-        style={{ height: MESSAGE_HEIGHT }}
-      >
-        {(!isCurrentUser && !isSameSender) && (
-          <div className="flex-shrink-0 mr-1 self-end">
-            <div className="w-6 h-6 rounded-full overflow-hidden">
-              <Image
-                src={activeFriend?.photoURL || "/noProfile.jpg"}
-                alt="profile"
-                width={24}
-                height={24}
-                className="object-cover"
-              />
-            </div>
-          </div>
-        )}
-        {isSameSender && <div className="px-4"></div>}
+      return (
         <div
-          className={`max-w-[85%] rounded-2xl px-3 py-1.5 ${
-            isCurrentUser
-              ? "bg-blue-500 text-white"
-              : "bg-gray-700 text-gray-100"
+          key={i}
+          className={`flex messagesIn p-1 ${
+            isCurrentUser ? "justify-end" : "justify-start"
           }`}
+          // style={{ height: MESSAGE_HEIGHT }}
         >
-          <p className="text-sm whitespace-pre-wrap break-words">
-            {msg.text}
-          </p>
-          <p
-            className={`text-[10px] mt-0.5 ${
-              isCurrentUser ? "text-blue-100" : "text-gray-400"
+          {!isCurrentUser && !isSameSender && (
+            <div className="flex-shrink-0 mr-1 self-end">
+              <div className="w-6 h-6 rounded-full overflow-hidden">
+                <Image
+                  src={activeFriend?.photoURL || "/noProfile.jpg"}
+                  alt="profile"
+                  width={24}
+                  height={24}
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          )}
+          {isSameSender && <div className="px-4"></div>}
+          <div
+            className={`max-[800px]:max-w-[85%] max-w-96 rounded-2xl px-3 py-1.5 ${
+              isCurrentUser
+                ? "bg-blue-500 text-white"
+                : "bg-gray-700 text-gray-100"
             }`}
           >
-            {new Date(msg.timestamp).toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            })}
-          </p>
-        </div>
-        {(isCurrentUser && !isSameSender) && (
-          <div className="flex-shrink-0 ml-1 self-end">
-            <div className="w-6 h-6 rounded-full overflow-hidden">
-              <Image
-                src={userData.photoURL || "/noProfile.jpg"}
-                alt="profile"
-                width={24}
-                height={24}
-                className="object-cover"
-              />
-            </div>
+            <p className="text-sm whitespace-pre-wrap break-words">
+              {msg.text}
+            </p>
+            <p
+              className={`text-[10px] mt-0.5 ${
+                isCurrentUser ? "text-blue-100" : "text-gray-400"
+              }`}
+            >
+              {new Date(msg.timestamp).toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </p>
           </div>
-        )}
-        {isSameSender && <div className="px-4"></div>}
-      </div>
-    );
-  }, [messages, userData, activeFriend]);
+          {isCurrentUser && !isSameSender && (
+            <div className="flex-shrink-0 ml-1 self-end">
+              <div className="w-6 h-6 rounded-full overflow-hidden">
+                <Image
+                  src={userData.photoURL || "/noProfile.jpg"}
+                  alt="profile"
+                  width={24}
+                  height={24}
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          )}
+          {isSameSender && <div className="px-4"></div>}
+        </div>
+      );
+    },
+    [messages, userData, activeFriend]
+  );
 
   // Memoize the visible messages list
   const visibleMessagesList = useMemo(() => {
@@ -132,7 +148,8 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const handleScroll = useCallback(() => {
     if (!messagesContainerRef.current) return;
 
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } =
+      messagesContainerRef.current;
     const isNearBottom = scrollHeight - clientHeight - scrollTop < 200;
 
     if (!isNearBottom) {
@@ -188,6 +205,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     setAttachments((prev) => [...prev, ...files]);
+    console.log(URL.createObjectURL(e.target.files[0]));
   };
 
   const handleTyping = () => {
@@ -204,6 +222,8 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
     e.preventDefault();
 
     if (!message.trim() && attachments.length === 0) return;
+
+    console.log(attachments);
 
     const newMessage = {
       text: message,
@@ -267,7 +287,6 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
         <button
           onClick={() => {
             setActivePanelMain("chats");
-            
             setActiveFriend(null);
           }}
           className="hidden max-[800px]:flex mx-2 p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-all duration-300 backdrop-blur-sm"
@@ -301,7 +320,39 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
             </p>
           </div>
         </div>
-        <div className="w-8"></div>
+        <button
+          className="cursor-pointer"
+          onClick={() => {
+            if (activeCall) return;
+            setActiveCall(activeFriend);
+            call(activeFriend)
+            setActiveFriend(null);
+            redirect("/call");
+          }}
+        >
+          <svg
+            className="mx-4"
+            width="30px"
+            height="30px"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15.0002 4V5C15.0002 6.88562 15.0002 7.82843 15.586 8.41421C16.1718 9 17.1146 9 19.0002 9H20.5002M20.5002 9L18.0002 7M20.5002 9L18.0002 11"
+              stroke="#fff"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M4.00655 7.93309C3.93421 9.84122 4.41713 13.0817 7.6677 16.3323C8.45191 17.1165 9.23553 17.7396 10 18.2327M5.53781 4.93723C6.93076 3.54428 9.15317 3.73144 10.0376 5.31617L10.6866 6.4791C11.2723 7.52858 11.0372 8.90532 10.1147 9.8278C10.1147 9.8278 10.1147 9.8278 10.1147 9.8278C10.1146 9.82792 8.99588 10.9468 11.0245 12.9755C13.0525 15.0035 14.1714 13.8861 14.1722 13.8853C14.1722 13.8853 14.1722 13.8853 14.1722 13.8853C15.0947 12.9628 16.4714 12.7277 17.5209 13.3134L18.6838 13.9624C20.2686 14.8468 20.4557 17.0692 19.0628 18.4622C18.2258 19.2992 17.2004 19.9505 16.0669 19.9934C15.2529 20.0243 14.1963 19.9541 13 19.6111"
+              stroke="#fff"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
       </div>
 
       {/* Messages */}
@@ -313,7 +364,13 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
           <div className="w-full flex items-center justify-center"></div>
         ) : (
           <div style={{ height: messages.length * MESSAGE_HEIGHT }}>
-            <div style={{ transform: `translateY(${visibleRange.start * MESSAGE_HEIGHT}px)` }}>
+            <div
+              style={{
+                transform: `translateY(${
+                  visibleRange.start * MESSAGE_HEIGHT
+                }px)`,
+              }}
+            >
               {visibleMessagesList}
             </div>
           </div>
@@ -400,8 +457,7 @@ const Chats = ({ setActivePanelMain, activePanelMain }) => {
           <div className="flex-1 min-h-[36px] max-h-24 bg-gray-800/50 rounded-lg flex items-end">
             <textarea
               value={message}
-              onFocus={() => {
-              }}
+              onFocus={() => {}}
               onChange={(e) => {
                 setMessage(e.target.value);
                 handleTyping();

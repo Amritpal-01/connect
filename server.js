@@ -35,6 +35,36 @@ app.prepare().then(() => {
       });
       }
     })
+
+    // WebRTC signaling handlers
+    socket.on("offer", ({ offer, to, from }) => {
+      const targetUser = userMaps[to];
+      if (targetUser) {
+        io.to(targetUser).emit("recieveOffer", { offer, from });
+      }
+    });
+
+    socket.on("answer", ({ answer, to, from }) => {
+      const targetUser = userMaps[to];
+      if (targetUser) {
+        io.to(targetUser).emit("receiveAnswer", { answer, from });
+      }
+    });
+
+    socket.on("ice-candidate", ({ candidate, to, from }) => {
+      const targetUser = userMaps[to];
+      if (targetUser) {
+        io.to(targetUser).emit("ice-candidate", { candidate, from });
+      }
+    });
+
+    socket.on("disconnect", () => {
+      // Remove user from userMaps when they disconnect
+      const userId = Object.keys(userMaps).find(key => userMaps[key] === socket.id);
+      if (userId) {
+        delete userMaps[userId];
+      }
+    });
   });
 
   httpServer
