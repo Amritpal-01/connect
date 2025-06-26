@@ -78,7 +78,7 @@ const Friends = ({ setActivePanelMain }) => {
                   setActivePanelMain("room");
                   setActiveFriend(friend);
                 }}
-                className="friend w-full max-w-md px-4 py-3 flex items-center gap-3 relative hover:bg-gray-800/50 rounded-xl transition-all duration-300 cursor-pointer group"
+                className="friend w-full max-w-md px-4 py-3 flex items-center gap-3 relative hover:bg-gray-800/50 active:bg-gray-800/50 rounded-xl transition-all duration-300 cursor-pointer group"
               >
                 <div className="aspect-square w-12 relative overflow-hidden rounded-full ring-2 ring-gray-700 group-hover:ring-blue-500 transition-all duration-300">
                   <Image
