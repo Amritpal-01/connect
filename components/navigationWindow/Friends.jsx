@@ -63,7 +63,7 @@ const Friends = ({ setActivePanelMain }) => {
           </svg>
         </div>
 
-        <div className="w-full flex flex-col items-center pb-40 overflow-auto overflow-x-hidden scrollbar-thin-custom">
+        <div className="w-full max-h-full flex flex-col items-center pb-40 overflow-auto overflow-x-hidden scrollbar-thin-custom">
           {filteredFriends.length === 0 ? (
             <div className="text-gray-400 text-center py-8">
               {searchQuery
